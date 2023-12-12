@@ -7,7 +7,7 @@
 ######################################################
 
 # Path - raw data input and clean data output
-path <- "...\\Data"
+path <- "C:/Users/larwi/OneDrive/AAA/Uni/Projects/Removing Information/Analysis/InfoRetract/Data"
 
 
 

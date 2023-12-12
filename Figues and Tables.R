@@ -16,11 +16,11 @@
 ######################################################
 
 # File locations for input and output
-inpath <- "...\\Data"
-outpath <- "...\\Output"
+inpath <- "C:\\Users\\larwi\\OneDrive\\AAA\\Uni\\Projects\\Removing Information\\Analysis\\InfoRetract\\Data"
+outpath <- "C:\\Users\\larwi\\OneDrive\\AAA\\Uni\\Projects\\Removing Information\\Analysis\\InfoRetract\\Output"
 
 # Setting file type for tables
-output_type <- "html" # can be set to 'html' or 'latex'
+output_type <- "latex" # can be set to 'html' or 'latex'
 
 # Change figure quality
 set_dpi <- 400
@@ -814,11 +814,11 @@ stargazer(ols_belief_post_subj,
 ######################################################
 
 # Regression
-ols_regular_treat <- lm(obslnpost ~ signal_ratio*factor(treat) + prior_ratio*factor(treat), df_regular)
+ols_regular_treat <- lm(obslnpost ~ signal_ratio*factor(treat) + prior_ratio*factor(treat), df_regular[df_regular$aggregate_round==0,])
 
 # Table with overview
 stargazer(ols_regular_treat,
-          se = starprep(ols_regular_treat, clusters = df_regular$id),
+          se = starprep(ols_regular_treat, clusters = df_regular[df_regular$aggregate_round==0,]$id),
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
@@ -1063,7 +1063,7 @@ df_main$ver_retract_all <- ifelse(df_main$ver_retract==1 & !is.na(df_main$ver_re
 
 # Regression
 ols_retract_10a <-lm(belief ~ ver_retract_all*signal_direction 
-                     + factor(sign_hist), df_main)
+                     + factor(sign_hist), df_main[df_main$aggregate_round==0,])
 
 # Output
 stargazer(ols_retract_10a, 
