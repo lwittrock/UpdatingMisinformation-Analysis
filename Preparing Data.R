@@ -7,7 +7,7 @@
 ######################################################
 
 # Path - raw data input and clean data output
-path <- "C:/Users/larwi/OneDrive/AAA/Uni/Projects/Removing Information/Analysis/InfoRetract/Data"
+path <- ""
 
 
 
@@ -55,8 +55,8 @@ raw_times_extra <- read.csv(paste0(path, "/raw_times_extra.csv"))
 ######################################################
 
 # Participant id
-names(df_wide)[names(df_wide) == "ï..participant.id_in_session"] <- "id"
-names(df_wide_extra)[names(df_wide_extra) == "ï..participant.id_in_session"] <- "id"
+names(df_wide)[names(df_wide) == "Ã¯..participant.id_in_session"] <- "id"
+names(df_wide_extra)[names(df_wide_extra) == "Ã¯..participant.id_in_session"] <- "id"
 df_wide_extra$id <- df_wide_extra$id + 1000
 
 # Adding session variable
@@ -887,5 +887,6 @@ write.csv(df_wide_all, file = paste0(path, "\\data_complete_wide.csv"), row.name
 # Saving data file for all aggregate signal treatment values
 save(df_treat_aggregate, file = paste0(path, "\\data_treat_agg_signal.rda"))
 write.csv(df_treat_aggregate, file = paste0(path, "\\data_treat_agg_signal.rda"), row.names = FALSE)
+
 
 
