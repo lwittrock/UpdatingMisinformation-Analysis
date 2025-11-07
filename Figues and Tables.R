@@ -16,8 +16,8 @@
 ######################################################
 
 # File locations for input and output
-inpath <- "C:\\Users\\larwi\\OneDrive\\AAA\\Uni\\Projects\\Removing Information\\Analysis\\InfoRetract\\Data"
-outpath <- "C:\\Users\\larwi\\OneDrive\\AAA\\Uni\\Projects\\Removing Information\\Analysis\\InfoRetract\\Output"
+inpath <- "" # Fill in path here
+outpath <- "" # Fill in path here
 
 # Setting file type for tables
 output_type <- "latex" # can be set to 'html' or 'latex'
@@ -1300,4 +1300,5 @@ stargazer(ols_regular_belief_change1, ols_regular_belief_change2, ols_regular_be
           omit.stat = c("rsq", "f", "ser"),
           title = "Updating with Regular Signals",
           out = paste0(outpath, "\\03_tab_regular_updating_verifications_belief_change.", output_extension))
+
 
