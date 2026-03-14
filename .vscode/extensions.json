@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "REditorSupport.r",
+    "REditorSupport.r-lsp",
+    "rdebugger.r-debugger",
+    "Ikuyadeu.r"
+  ]
+}
