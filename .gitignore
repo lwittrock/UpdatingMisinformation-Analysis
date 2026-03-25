@@ -7,6 +7,10 @@ Rplots.pdf
 .RData
 .Rproj.user
 
+# Baseline snapshots (for refactor verification)
+output_baseline/
+data/processed_baseline/
+
 # Development docs
 CLAUDE.md
 REPO_OVERVIEW.md

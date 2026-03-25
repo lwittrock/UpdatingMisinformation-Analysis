@@ -112,6 +112,14 @@ model_clusters <- function(model, cluster_vec) {
   cluster_vec[as.integer(names(model$residuals))]
 }
 
+# Helper: write stargazer output without the auto-generated timestamp comment
+# (prevents spurious git diffs when re-running the pipeline with unchanged results)
+write_stargazer <- function(..., out) {
+  lines <- capture.output(stargazer::stargazer(...))
+  lines <- lines[!grepl("^% Date and time:|^<!-- Date and time:", lines)]
+  writeLines(lines, out)
+}
+
 
 ######################################################
 # Reading data
@@ -228,7 +236,7 @@ tryCatch({
 ols_belief_post_subj <- lm(belief ~ posterior_subj, df_main)
 
 # Table with overview
-stargazer(ols_belief_post_subj,
+write_stargazer(ols_belief_post_subj,
           se = starprep(ols_belief_post_subj, clusters = df_main$id),
           type = output_type,
           style = "default",
@@ -261,7 +269,7 @@ me_regular <- lmer(obslnpost ~ signal_ratio + prior_ratio + (1 + signal_ratio + 
 me_regular_c <- lmer(obslnpost ~ signal_ratio + prior_ratio + signal_ratio:c + (1 + signal_ratio + prior_ratio|id), df_regular)
 
 # Table with overview
-stargazer(ols_regular, me_regular, me_regular_c,
+write_stargazer(ols_regular, me_regular, me_regular_c,
           se = starprep(ols_regular, clusters = df_regular$id),
           type = output_type,
           style = "default",
@@ -335,7 +343,7 @@ tryCatch({
 ols_regular_treat <- lm(obslnpost ~ signal_ratio*factor(treat) + prior_ratio*factor(treat), df_regular[df_regular$aggregate_round==0,])
 
 # Table with overview
-stargazer(ols_regular_treat,
+write_stargazer(ols_regular_treat,
           se = starprep(ols_regular_treat, clusters = df_regular[df_regular$aggregate_round==0,]$id),
           type = output_type,
           style = "default",
@@ -470,7 +478,7 @@ me_regular_expl4 <- lmer(obslnpost ~ signal_ratio + prior_ratio
                          + (1 + signal_ratio + prior_ratio|id), df_regular[df_regular$treat_aggregate_signal==0,])
 
 # Table with overview
-stargazer(me_regular_expl1, me_regular_expl2, me_regular_expl3, me_regular_expl4,
+write_stargazer(me_regular_expl1, me_regular_expl2, me_regular_expl3, me_regular_expl4,
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
@@ -519,7 +527,7 @@ ols_regular_belief_change4 <- lm(belief_change_adj ~ round
 
 
 # Table with overview
-stargazer(ols_regular_belief_change1, ols_regular_belief_change2, ols_regular_belief_change3, ols_regular_belief_change4,
+write_stargazer(ols_regular_belief_change1, ols_regular_belief_change2, ols_regular_belief_change3, ols_regular_belief_change4,
           type = output_type,
           style = "default",
           dep.var.labels = c("$(b_t - b_{t-1}) \\cdot I(s)$"),
@@ -849,7 +857,7 @@ tryCatch({
 ols_retract_5_main <- lm(over_report_ret ~ over_report_lag1, df_retract)
 
 # Table with overview
-stargazer(ols_retract_5_main,
+write_stargazer(ols_retract_5_main,
           se = starprep(ols_retract_5_main, clusters = df_retract$id),
           type = output_type,
           style = "default",
@@ -905,7 +913,7 @@ ols_retract_6b <-lm(belief ~ ver_retract_all + factor(ret_hist)
 
 
 # Table with overview
-stargazer(ols_retract_6a, ols_retract_6b,
+write_stargazer(ols_retract_6a, ols_retract_6b,
           #se = starprep(ols_retract_6a, ols_retract_6b, clusters = df_main$id), # horribly slow.
           type = output_type,
           style = "default",
@@ -944,7 +952,7 @@ ols_confirm_obj <- lm(obslnpost ~ signal_ratio_obj + prior_ratio, df_confirm)
 ols_retcon_obj  <- lm(obslnpost ~ signal_ratio_obj + prior_ratio, df_retcon)
 
 # Table with overview
-stargazer(ols_retract_obj, ols_confirm_obj, ols_retcon_obj,
+write_stargazer(ols_retract_obj, ols_confirm_obj, ols_retcon_obj,
           se = list(starprep(ols_retract_obj, clusters = model_clusters(ols_retract_obj, df_retract$id))[[1]],
                     starprep(ols_confirm_obj, clusters = model_clusters(ols_confirm_obj, df_confirm$id))[[1]],
                     starprep(ols_retcon_obj, clusters = model_clusters(ols_retcon_obj, df_retcon$id))[[1]]),
@@ -1004,7 +1012,7 @@ ols_retract_5_types3 <- lm(over_report_ret ~ over_report_lag1 + type_subject, df
 ols_retract_5_types4 <- lm(over_report_ret ~ over_report_lag1 + factor(id), df_retract)
 
 # Table with overview
-stargazer(ols_retract_5_types1, ols_retract_5_types2, ols_retract_5_types3, ols_retract_5_types4,
+write_stargazer(ols_retract_5_types1, ols_retract_5_types2, ols_retract_5_types3, ols_retract_5_types4,
           se = starprep(ols_retract_5_types1, ols_retract_5_types2, ols_retract_5_types3, clusters = df_retract$id),
           keep = c("Constant", "over_report_lag1", "type_subject", "inference", "base_rate", "overreport_avg"),
           type = output_type,
@@ -1046,7 +1054,7 @@ ols_retract_5_expl2 <- lm(over_report_ret ~ over_report_lag1*treat_no_anchor
 
 
 # Table with overview
-stargazer(ols_retract_5_expl1, ols_retract_5_expl2,
+write_stargazer(ols_retract_5_expl1, ols_retract_5_expl2,
           se = starprep(ols_retract_5_expl1, ols_retract_5_expl2, clusters = df_retract$id),
           type = output_type,
           style = "default",
@@ -1074,7 +1082,7 @@ tryCatch({
 ols_retract_9 <- lm(belief_diff_priorinduced_adj ~ over_report_lag1, df_retract)
 
 # Table with overview
-stargazer(ols_retract_9,
+write_stargazer(ols_retract_9,
           type = output_type,
           style = "default",
           dep.var.labels = c("Belief higher than induced Prior after Retraction"),
@@ -1109,7 +1117,7 @@ ols_retract_10a <-lm(belief ~ ver_retract_all*signal_direction
                      + factor(sign_hist), df_main[df_main$aggregate_round==0,])
 
 # Output
-stargazer(ols_retract_10a,
+write_stargazer(ols_retract_10a,
           type = output_type,
           style = "default",
           dep.var.labels = c("Reported Belief", "Belief higher than Bayesian"),
@@ -1351,7 +1359,7 @@ ols_uninf_1a <-lm(belief ~ factor(uninf_hist)
                   + factor(agg_hist), df_main)
 
 # Table with overview
-stargazer(ols_uninf_1a, #ols_uninf_1b,
+write_stargazer(ols_uninf_1a, #ols_uninf_1b,
           type = output_type,
           style = "default",
           dep.var.labels = c("Reported Belief"),
@@ -1386,7 +1394,7 @@ ols_ret_cd <- lm(obslnpost ~ signal_ratio + prior_ratio, df_retract)
 me_ret_cd <- lmer(obslnpost ~ signal_ratio + prior_ratio + (1 | id), df_retract)
 
 # Table
-stargazer(ols_ret_cd, me_ret_cd,
+write_stargazer(ols_ret_cd, me_ret_cd,
           se = list(starprep(ols_ret_cd, clusters = df_retract$id)[[1]], NULL),
           type = output_type,
           style = "default",
@@ -1416,7 +1424,7 @@ ols_ret_hist2 <- lm(over_report_ret ~ over_report_lag1 + factor(prev_verified), 
 ols_ret_hist3 <- lm(over_report_ret ~ over_report_lag1 * factor(prev_verified), df_retract)
 
 # Table
-stargazer(ols_ret_hist1, ols_ret_hist2, ols_ret_hist3,
+write_stargazer(ols_ret_hist1, ols_ret_hist2, ols_ret_hist3,
           se = starprep(ols_ret_hist1, ols_ret_hist2, ols_ret_hist3,
                         clusters = df_retract$id),
           type = output_type,
@@ -1450,7 +1458,7 @@ tryCatch({
 ols_ret_prior <- lm(over_report_ret ~ over_report_lag1 * belief_lag2_bin, df_retract)
 
 # Table
-stargazer(ols_ret_prior,
+write_stargazer(ols_ret_prior,
           se = starprep(ols_ret_prior, clusters = df_retract$id),
           type = output_type,
           style = "default",
@@ -1639,7 +1647,7 @@ ols_persist2 <- lm(over_report_ret ~ over_report_lag1 + prior_aligned_bin, df_re
 ols_persist3 <- lm(over_report_ret ~ over_report_lag1 * prior_aligned_bin, df_retract)
 
 # Table
-stargazer(ols_persist1, ols_persist2, ols_persist3,
+write_stargazer(ols_persist1, ols_persist2, ols_persist3,
           se = list(starprep(ols_persist1, clusters = df_retract$id)[[1]],
                     starprep(ols_persist2, clusters = df_retract$id)[[1]],
                     starprep(ols_persist3, clusters = df_retract$id)[[1]]),
@@ -1896,7 +1904,7 @@ ols_confirm_treat <- lm(over_report ~ over_report_lag1*treat_no_anchor
                         + over_report_lag1*treat_no_history, df_confirm)
 
 # Table with overview
-stargazer(ols_confirm_treat,
+write_stargazer(ols_confirm_treat,
           se = starprep(ols_confirm_treat, clusters = model_clusters(ols_confirm_treat, df_confirm$id)),
           type = output_type,
           style = "default",
@@ -1943,7 +1951,7 @@ ols_inf_1b <-lm(belief ~ factor(inf_hist)
                 + factor(agg_hist), df_main_nouninf)
 
 # Table with overview
-stargazer(ols_inf_1a,ols_inf_1b,
+write_stargazer(ols_inf_1a,ols_inf_1b,
           type = output_type,
           style = "default",
           dep.var.labels = c("Reported Belief"),
@@ -1992,7 +2000,7 @@ ols_conf_inf1 <- lm(over_report ~ is_confirmation, df_conf_inf)
 ols_conf_inf2 <- lm(over_report ~ is_confirmation * prior_bin, df_conf_inf)
 
 # Table
-stargazer(ols_conf_inf1, ols_conf_inf2,
+write_stargazer(ols_conf_inf1, ols_conf_inf2,
           se = starprep(ols_conf_inf1, ols_conf_inf2,
                         clusters = model_clusters(ols_conf_inf1, df_conf_inf$id)),
           type = output_type,
@@ -2029,7 +2037,7 @@ ols_conf_cd <- lm(obslnpost ~ signal_ratio + prior_ratio, df_confirm)
 me_conf_cd <- lmer(obslnpost ~ signal_ratio + prior_ratio + (1 | id), df_confirm)
 
 # Table
-stargazer(ols_conf_cd, me_conf_cd,
+write_stargazer(ols_conf_cd, me_conf_cd,
           se = list(starprep(ols_conf_cd, clusters = model_clusters(ols_conf_cd, df_confirm$id))[[1]], NULL),
           type = output_type,
           style = "default",
@@ -2059,7 +2067,7 @@ ols_conf_hist2 <- lm(over_report ~ over_report_lag1 + factor(prev_verified), df_
 ols_conf_hist3 <- lm(over_report ~ over_report_lag1 * factor(prev_verified), df_confirm)
 
 # Table
-stargazer(ols_conf_hist1, ols_conf_hist2, ols_conf_hist3,
+write_stargazer(ols_conf_hist1, ols_conf_hist2, ols_conf_hist3,
           se = list(
             starprep(ols_conf_hist1, clusters = model_clusters(ols_conf_hist1, df_confirm$id))[[1]],
             starprep(ols_conf_hist2, clusters = model_clusters(ols_conf_hist2, df_confirm$id))[[1]],
@@ -2096,7 +2104,7 @@ tryCatch({
 ols_conf_prior <- lm(over_report ~ over_report_lag1 * belief_lag2_bin, df_confirm)
 
 # Table
-stargazer(ols_conf_prior,
+write_stargazer(ols_conf_prior,
           se = list(starprep(ols_conf_prior, clusters = model_clusters(ols_conf_prior, df_confirm$id))[[1]]),
           type = output_type,
           style = "default",
