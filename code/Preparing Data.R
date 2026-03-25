@@ -96,10 +96,14 @@ names(df_wide)[names(df_wide) == "questionnaire.1.player.belief_fake_red"] <- "b
 names(df_wide)[names(df_wide) == "questionnaire.1.player.open_feedback"] <- "text_choice"
 
 # Treatment variable
-df_wide$treat <- 999
-df_wide <- mutate(df_wide, treat = ifelse(belief_survey.1.player.treat==3, 1, treat)) # show history and previous belief
-df_wide <- mutate(df_wide, treat = ifelse(belief_survey.1.player.treat==1, 2, treat)) # show history but not previous belief
-df_wide <- mutate(df_wide, treat = ifelse(belief_survey.1.player.treat==2, 3, treat)) # show no history but previous belief
+df_wide <- df_wide %>% mutate(
+  treat = case_when(
+    belief_survey.1.player.treat == 3 ~ 1,  # show history and previous belief
+    belief_survey.1.player.treat == 1 ~ 2,  # show history but not previous belief
+    belief_survey.1.player.treat == 2 ~ 3,  # show no history but previous belief
+    TRUE ~ 999
+  )
+)
 df_wide$treat_no_anchor <- ifelse(df_wide$treat == 2, 1, 0)
 df_wide$treat_no_history <- ifelse(df_wide$treat == 3, 1, 0)
 
@@ -294,26 +298,32 @@ df_long <- arrange(df_long, id, round) %>% group_by(id)
 df_long <- mutate(df_long, ball_red_lag1 = ifelse(verify_round == 1, lag(ball_red, n = 1), NA))
 
 
-df_long$red_retract <- NA
-df_long$blue_retract <- NA
-df_long$red_confirm <- NA
-df_long$blue_confirm <- NA
-
-df_long <- mutate(df_long, red_retract = ifelse(verify_round ==1 | aggregate_round ==1, 0, red_retract))
-df_long <- mutate(df_long, red_retract = ifelse(verify_round ==1 & ball_red_lag1==1 & ver_retract==1, 1, red_retract))
-df_long <- mutate(df_long, red_retract = ifelse(aggregate_round ==1 & ball_red==1 & aggregate_informative==0, 1, red_retract))
-
-df_long <- mutate(df_long, blue_retract = ifelse(verify_round ==1 | aggregate_round ==1, 0, blue_retract))
-df_long <- mutate(df_long, blue_retract = ifelse(verify_round ==1 & ball_red_lag1==0 & ver_retract==1, 1, blue_retract))
-df_long <- mutate(df_long, blue_retract = ifelse(aggregate_round ==1 & ball_red==0 & aggregate_informative==0, 1, blue_retract))
-
-df_long <- mutate(df_long, red_confirm = ifelse(verify_round ==1 | aggregate_round ==1, 0, red_confirm))
-df_long <- mutate(df_long, red_confirm = ifelse(verify_round ==1 & ball_red_lag1==1 & ver_retract==0, 1, red_confirm))
-df_long <- mutate(df_long, red_confirm = ifelse(aggregate_round ==1 & ball_red==1 & aggregate_informative==1, 1, red_confirm))
-
-df_long <- mutate(df_long, blue_confirm = ifelse(verify_round ==1 | aggregate_round ==1, 0, blue_confirm))
-df_long <- mutate(df_long, blue_confirm = ifelse(verify_round ==1 & ball_red_lag1==0 & ver_retract==0, 1, blue_confirm))
-df_long <- mutate(df_long, blue_confirm = ifelse(aggregate_round ==1 & ball_red==0 & aggregate_informative==1, 1, blue_confirm))
+df_long <- df_long %>% mutate(
+  red_retract = case_when(
+    verify_round == 1 & ball_red_lag1 == 1 & ver_retract == 1 ~ 1,
+    aggregate_round == 1 & ball_red == 1 & aggregate_informative == 0 ~ 1,
+    verify_round == 1 | aggregate_round == 1 ~ 0,
+    TRUE ~ NA_real_
+  ),
+  blue_retract = case_when(
+    verify_round == 1 & ball_red_lag1 == 0 & ver_retract == 1 ~ 1,
+    aggregate_round == 1 & ball_red == 0 & aggregate_informative == 0 ~ 1,
+    verify_round == 1 | aggregate_round == 1 ~ 0,
+    TRUE ~ NA_real_
+  ),
+  red_confirm = case_when(
+    verify_round == 1 & ball_red_lag1 == 1 & ver_retract == 0 ~ 1,
+    aggregate_round == 1 & ball_red == 1 & aggregate_informative == 1 ~ 1,
+    verify_round == 1 | aggregate_round == 1 ~ 0,
+    TRUE ~ NA_real_
+  ),
+  blue_confirm = case_when(
+    verify_round == 1 & ball_red_lag1 == 0 & ver_retract == 0 ~ 1,
+    aggregate_round == 1 & ball_red == 0 & aggregate_informative == 1 ~ 1,
+    verify_round == 1 | aggregate_round == 1 ~ 0,
+    TRUE ~ NA_real_
+  )
+)
 
 # Ungroup before cleaning/sapply/colSums section (re-group before lags resume)
 df_long <- ungroup(df_long)
@@ -349,31 +359,35 @@ post <- function(prior, num_red, num_blue, num_red_ret, num_blue_ret, num_red_co
   return(posterior)
 }
 
-cat(">> Counting previous verifications & ball totals (slow — ~10 sapply loops)...\n")
-# Counting previous verifications
-df_long$prev_verified <- sapply(1:nrow(df_long), function(r) sum(df_long$verify_round & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-
-# Counting total ball numbers at each point in time
-df_long$prev_balls_red <- sapply(1:nrow(df_long), function(r) sum(df_long$ball_red & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-df_long$prev_balls_blue <- sapply(1:nrow(df_long), function(r) sum(df_long$ball_blue & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-
-df_long <- mutate(df_long, red_balls = colSums(rbind(ball_red, prev_balls_red), na.rm = TRUE))
-df_long <- mutate(df_long, blue_balls = colSums(rbind(ball_blue, prev_balls_blue), na.rm = TRUE))
-
-df_long$prev_balls_red_ret <- sapply(1:nrow(df_long), function(r) sum(df_long$red_retract & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-df_long$prev_balls_blue_ret <- sapply(1:nrow(df_long), function(r) sum(df_long$blue_retract & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-df_long$prev_balls_red_conf <- sapply(1:nrow(df_long), function(r) sum(df_long$red_confirm & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-df_long$prev_balls_blue_conf <- sapply(1:nrow(df_long), function(r) sum(df_long$blue_confirm & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-
-df_long <- mutate(df_long, red_balls_ret = colSums(rbind(red_retract, prev_balls_red_ret), na.rm = TRUE))
-df_long <- mutate(df_long, blue_balls_ret = colSums(rbind(blue_retract, prev_balls_blue_ret), na.rm = TRUE))
-df_long <- mutate(df_long, red_balls_conf = colSums(rbind(red_confirm, prev_balls_red_conf), na.rm = TRUE))
-df_long <- mutate(df_long, blue_balls_conf = colSums(rbind(blue_confirm, prev_balls_blue_conf), na.rm = TRUE))
-
-df_long$prev_informative <- sapply(1:nrow(df_long), function(r) sum(df_long$aggregate_informative & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
-
-df_long$temp_agg_uninf <- ifelse(df_long$aggregate_informative==0,1,0)
-df_long$prev_uninformative <- sapply(1:nrow(df_long), function(r) sum(df_long$temp_agg_uninf & df_long$id==df_long$id[r] & df_long$round < df_long$round[r], na.rm = TRUE))
+cat(">> Counting previous verifications & ball totals...\n")
+# Cumulative counts per subject (O(n) via cumsum, replaces O(n²) sapply loops)
+df_long <- df_long %>%
+  arrange(id, round) %>%
+  group_by(id) %>%
+  mutate(
+    # Cumulative counts of previous rounds (strictly before current)
+    prev_verified        = cumsum(lag(replace_na(verify_round, 0),        default = 0)),
+    prev_balls_red       = cumsum(lag(replace_na(ball_red, 0),            default = 0)),
+    prev_balls_blue      = cumsum(lag(replace_na(ball_blue, 0),           default = 0)),
+    # Running totals including current round (ball counts)
+    red_balls       = replace_na(ball_red, 0)      + prev_balls_red,
+    blue_balls      = replace_na(ball_blue, 0)     + prev_balls_blue,
+    # Retraction/confirmation cumulative counts
+    prev_balls_red_ret   = cumsum(lag(replace_na(red_retract, 0),         default = 0)),
+    prev_balls_blue_ret  = cumsum(lag(replace_na(blue_retract, 0),        default = 0)),
+    prev_balls_red_conf  = cumsum(lag(replace_na(red_confirm, 0),         default = 0)),
+    prev_balls_blue_conf = cumsum(lag(replace_na(blue_confirm, 0),        default = 0)),
+    # Running totals including current round (retraction/confirmation counts)
+    red_balls_ret   = replace_na(red_retract, 0)   + prev_balls_red_ret,
+    blue_balls_ret  = replace_na(blue_retract, 0)  + prev_balls_blue_ret,
+    red_balls_conf  = replace_na(red_confirm, 0)   + prev_balls_red_conf,
+    blue_balls_conf = replace_na(blue_confirm, 0)  + prev_balls_blue_conf,
+    # Aggregate round cumulative counts
+    prev_informative     = cumsum(lag(replace_na(aggregate_informative, 0), default = 0)),
+    temp_agg_uninf       = ifelse(aggregate_informative == 0, 1, 0),
+    prev_uninformative   = cumsum(lag(replace_na(temp_agg_uninf, 0),      default = 0))
+  ) %>%
+  ungroup()
 
 
 # cleaning
