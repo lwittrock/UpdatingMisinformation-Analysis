@@ -511,6 +511,7 @@ df_long$obslnpost <- log(df_long$belief_adj/(1-df_long$belief_adj))
 
 df_long$prior_ratio <- log(df_long$belief_lag_adj/(1-df_long$belief_lag_adj))
 df_long$signal_ratio <- log(df_long$signal_subj/(1-df_long$signal_subj))
+df_long$signal_ratio_obj <- log(df_long$signal_memory/(1-df_long$signal_memory))
 
 
 # Creating additional variables for analysis
