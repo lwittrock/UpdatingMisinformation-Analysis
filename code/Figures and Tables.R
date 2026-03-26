@@ -947,9 +947,9 @@ tryCatch({
 df_retcon <- df_main[df_main$verify_round == 1,]
 
 # Regressions with objective signal ratio
-ols_retract_obj <- lm(obslnpost ~ signal_ratio_obj + prior_ratio, df_retract)
-ols_confirm_obj <- lm(obslnpost ~ signal_ratio_obj + prior_ratio, df_confirm)
-ols_retcon_obj  <- lm(obslnpost ~ signal_ratio_obj + prior_ratio, df_retcon)
+ols_retract_obj <- lm(obslnpost ~ 0 + signal_ratio_obj + prior_ratio, df_retract)
+ols_confirm_obj <- lm(obslnpost ~ 0 + signal_ratio_obj + prior_ratio, df_confirm)
+ols_retcon_obj  <- lm(obslnpost ~ 0 + signal_ratio_obj + prior_ratio, df_retcon)
 
 # Table with overview
 write_stargazer(ols_retract_obj, ols_confirm_obj, ols_retcon_obj,
@@ -960,8 +960,7 @@ write_stargazer(ols_retract_obj, ols_confirm_obj, ols_retcon_obj,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
           column.labels = c("Retractions", "Confirmations", "Combined"),
-          covariate.labels = c("Constant", "Signal (objective)", "Prior"),
-          intercept.bottom = FALSE,
+          covariate.labels = c("Signal (objective)", "Prior"),
           no.space = TRUE,
           omit.stat = c("rsq", "ser", "f"),
           title = "Signal Use and Base-Rate Use with Objective Signals",
@@ -1390,8 +1389,8 @@ if (.should_run("tab_ret_cd")) {
 tryCatch({
 
 # Regressions
-ols_ret_cd <- lm(obslnpost ~ signal_ratio + prior_ratio, df_retract)
-me_ret_cd <- lmer(obslnpost ~ signal_ratio + prior_ratio + (1 | id), df_retract)
+ols_ret_cd <- lm(obslnpost ~ 0 + signal_ratio + prior_ratio, df_retract)
+me_ret_cd <- lmer(obslnpost ~ 0 + signal_ratio + prior_ratio + (1 | id), df_retract)
 
 # Table
 write_stargazer(ols_ret_cd, me_ret_cd,
@@ -1399,8 +1398,7 @@ write_stargazer(ols_ret_cd, me_ret_cd,
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
-          covariate.labels = c("Constant", "Signal (c)", "Prior (d)"),
-          intercept.bottom = FALSE,
+          covariate.labels = c("Signal (c)", "Prior (d)"),
           no.space = TRUE,
           omit.stat = c("rsq", "f", "ser"),
           title = "Inference and Base-Rate Use: Retractions",
@@ -2033,8 +2031,8 @@ if (.should_run("tab_conf_cd")) {
 tryCatch({
 
 # Regressions
-ols_conf_cd <- lm(obslnpost ~ signal_ratio + prior_ratio, df_confirm)
-me_conf_cd <- lmer(obslnpost ~ signal_ratio + prior_ratio + (1 | id), df_confirm)
+ols_conf_cd <- lm(obslnpost ~ 0 + signal_ratio + prior_ratio, df_confirm)
+me_conf_cd <- lmer(obslnpost ~ 0 + signal_ratio + prior_ratio + (1 | id), df_confirm)
 
 # Table
 write_stargazer(ols_conf_cd, me_conf_cd,
@@ -2042,8 +2040,7 @@ write_stargazer(ols_conf_cd, me_conf_cd,
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
-          covariate.labels = c("Constant", "Signal (c)", "Prior (d)"),
-          intercept.bottom = FALSE,
+          covariate.labels = c("Signal (c)", "Prior (d)"),
           no.space = TRUE,
           omit.stat = c("rsq", "f", "ser"),
           title = "Inference and Base-Rate Use: Confirmations",
