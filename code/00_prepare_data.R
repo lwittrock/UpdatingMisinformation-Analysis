@@ -501,6 +501,9 @@ df_long$post_subj_adj[df_long$post_subj_adj == 0] <- 0.001
 df_long$post_subj_adj[df_long$post_subj_adj == 1] <- 0.999
 
 # Calculating added info signal
+# Extracts the signal likelihood ratio from prior and posterior:
+#   signal = P(ball|Red urn) = (post - prior*post) / (post + prior - 2*prior*post)
+# Derived by inverting Bayes' rule: post = prior*s / (prior*s + (1-prior)*(1-s))
 added_info <- function(prior, post){
   x = (post-prior*post)/(post+prior-2*post*prior)
   return(x)
@@ -508,6 +511,10 @@ added_info <- function(prior, post){
 
 df_long$signal_subj <- added_info(df_long$belief_lag_adj, df_long$post_subj_adj)
 
+# Objective signal likelihoods (from urn composition with gamma = 0.6):
+#   Regular: P(red|Red urn) = 0.6, P(red|Blue urn) = 0.4
+#   Retraction: removes prior signal, so signal_memory = P(ball|urn) of the retracted ball
+#   Confirmation: same-color ball drawn, P(red|Red) = 2/3, P(red|Blue) = 1/3
 df_long$signal_memory <- 999
 df_long <- mutate(df_long, signal_memory = ifelse(!is.na(ver_retract) & ver_retract==1 & ball_red_lag1==1, 0.4, signal_memory))
 df_long <- mutate(df_long, signal_memory = ifelse(!is.na(ver_retract) & ver_retract==1 & ball_red_lag1==0, 0.6, signal_memory))
@@ -519,7 +526,10 @@ df_long <- mutate(df_long, signal_memory = ifelse(verify_round==0 & ball_red==0,
 df_long <- mutate(df_long, signal_memory = ifelse(verify_round==0 & ball_red==1, 0.6, signal_memory))
 
 
-# Calculate likelihood ratios - based on subjective posteriors
+# Log-odds decomposition (Grether 1980):
+#   ln(posterior odds) = ln(prior odds) + ln(likelihood ratio)
+#   obslnpost         = prior_ratio    + signal_ratio
+# where odds(p) = p/(1-p), so ln_odds(p) = log(p/(1-p))
 df_long$truelnpost <- log(df_long$post_subj_adj/(1-df_long$post_subj_adj))
 df_long$obslnpost <- log(df_long$belief_adj/(1-df_long$belief_adj))
 
@@ -678,7 +688,9 @@ df_long <- mutate(df_long, reaction = ifelse(wrong ==1, "wrong", reaction))
 df_long$reaction_alt <- df_long$reaction
 df_long$reaction_alt <- ifelse(df_long$reaction=="no change", "under", df_long$reaction_alt)
 
-# Calculate induced priors ## only for verification rounds
+# Induced prior: the prior that would rationalize the t-1 belief given the t-1 signal.
+# For red signal (P=0.6): prior_induced = (2*b)/(3-b), inverting Bayes' rule with gamma=0.6
+# For blue signal (P=0.4): prior_induced = (3*b)/(2+b), inverting Bayes' rule with gamma=0.4
 df_long$prior_induced <- NA
 df_long <- mutate(df_long, prior_induced = ifelse(ball_red_lag1==1, (2*belief_lag1)/(3 - belief_lag1), prior_induced))
 df_long <- mutate(df_long, prior_induced = ifelse(ball_red_lag1==0, (3*belief_lag1)/(2 + belief_lag1), prior_induced))
@@ -695,9 +707,12 @@ df_long <- mutate(df_long, belief_lag4 = lag(belief, 4))
 # Additional variables for confirmation analysis
 ######################################################
 
-# Creating induced urn distribution that would rationalize beliefs t-2 and t-1. 
+# Induced urn distribution: the urn composition q that rationalizes the belief
+# update from t-2 to t-1. If subject applied Bayes' rule with some urn P(red|urn)=q,
+# then q = (b2*(4*b1+3) - 7*b1) / (8*b2*b1 - 4*b2 - 4*b1)
+# Values outside [0,1] indicate irrational/non-Bayesian updating (flagged by confirm_irrational).
 df_long$urn_dist_induced <- NA
-df_long <- mutate(df_long, urn_dist_induced = ifelse(verify_round==1, 
+df_long <- mutate(df_long, urn_dist_induced = ifelse(verify_round==1,
                     (belief_lag2*(4*belief_lag1+3)-7*belief_lag1)/
                     (8*belief_lag2*belief_lag1-4*belief_lag2-4*belief_lag1), urn_dist_induced))
 

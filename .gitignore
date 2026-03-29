@@ -14,3 +14,6 @@ data/processed_baseline/
 # Development docs
 CLAUDE.md
 REPO_OVERVIEW.md
+
+# Claude Code local settings
+.claude/settings.local.json
