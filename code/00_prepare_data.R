@@ -727,13 +727,7 @@ df_long$post_induced_adj <- df_long$post_induced
 df_long$post_induced_adj[df_long$post_induced_adj == 0] <- 0.001
 df_long$post_induced_adj[df_long$post_induced_adj == 1] <- 0.999
 
-# Creating signal that would lead to post after confirm signal (not used in Figures and Tables.R)
-df_long$signal_confirm <- added_info(df_long$belief_lag_adj, df_long$post_induced_adj)
-
-# Signal confirm ratio
-df_long$signal_confirm_ratio <- log(df_long$signal_confirm/(1-df_long$signal_confirm))
-
-# leads to many NaN for signal ration smaller 0 or bigger 1.
+# signal_confirm / signal_confirm_ratio removed — never used in analysis, produced NaN
 
 # Average rational belief change
 df_long$belief_change_rational_lag1 <- df_long$belief_lag2 - df_long$post_lag1
@@ -828,6 +822,31 @@ df_main <- df_long[df_long$outlier == 0, ]
 # Remove prolific id
 df_main <- subset(df_main,select=-c(prolific_id))
 
+# Rename columns for clarity
+df_main <- df_main %>% rename(
+  obs_log_post_ratio = obslnpost,
+  obs_log_post_ratio_lag1 = obslnpost_lag1,
+  true_log_post_ratio = truelnpost,
+  true_log_post_ratio_lag1 = truelnpost_lag1,
+  compressed_hist = comp_hist,
+  aggregate_hist = agg_hist,
+  sign_adjusted_hist = sign_hist,
+  signal_hist = hist,
+  signal_code = sig,
+  posterior_induced = post_induced,
+  posterior_subj_adj = post_subj_adj,
+  posterior_induced_adj = post_induced_adj,
+  posterior_lag1 = post_lag1,
+  posterior_lag2 = post_lag2,
+  is_retraction = ver_retract,
+  ret_same_color = ret_same,
+  conf_same_color = conf_same,
+  belief_dev_induced = belief_diff_priorinduced,
+  belief_dev_induced_adj = belief_diff_priorinduced_adj,
+  signal_aligned = signal_adj,
+  prior_aligned = prior_adj
+)
+
 
 # Creating additional datasets
 ######################################################
@@ -836,14 +855,12 @@ df_main <- subset(df_main,select=-c(prolific_id))
 df_regular <- df_main[df_main$verify_round == 0, ]
 
 # Creating data set - retraction updating
-df_retract <- df_main[df_main$ver_retract == 1, ]
+df_retract <- df_main[df_main$is_retraction == 1, ]
 df_retract <- df_retract[!is.na(df_retract$id), ]
 
 # Creating data set - confirmation updating
-df_confirm <- df_main[df_main$ver_retract == 0, ]
+df_confirm <- df_main[df_main$is_retraction == 0, ]
 df_confirm <- df_confirm[!is.na(df_confirm$id), ]
-
-df_confirm$signal_adj <- 1 - df_confirm$signal_adj
 
 # Creating data set - informative updating
 df_informative <- df_main[df_main$aggregate_informative == 1, ]

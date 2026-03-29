@@ -35,15 +35,15 @@ if (.should_run("fig7")) {
 .tick("Figure 7")
 tryCatch({
 
-df_confirm_temp <- df_confirm[df_confirm$belief_change_rational_lag1!=0,]
+df_conf_nonceiling <- df_confirm[df_confirm$belief_change_rational_lag1!=0,]
 
 # Summary per type
-df_confirm_id1 <- df_confirm_temp %>%
+df_confirm_id1 <- df_conf_nonceiling %>%
   group_by(id) %>%
   summarise(belief_change1 = mean(over_report_lag1, na.rm = TRUE),
             n = length(id))
 
-df_confirm_id2 <- df_confirm_temp %>%
+df_confirm_id2 <- df_conf_nonceiling %>%
   group_by(id) %>%
   summarise(belief_change2 = mean(over_report, na.rm = TRUE),
             n = length(id))
@@ -92,54 +92,54 @@ if (.should_run("fig8")) {
 tryCatch({
 
 # Summary per type
-df_confirm_type <- df_confirm_temp %>%
+df_conf_by_reaction <- df_conf_nonceiling %>%
   group_by(initial_reaction_conf) %>%
   summarise(belief_diff_sum = mean(over_report, na.rm = TRUE),
             SE = std.error(over_report, na.rm = TRUE),
             n = length(id))
 
 # Adjusting names for graph
-names(df_confirm_type)[names(df_confirm_type) == "initial_reaction_conf"] <- "type"
-df_confirm_type <- mutate(df_confirm_type, type = ifelse(type=="correct", "Correctly reacted (+- 1%pt)", type))
-df_confirm_type <- mutate(df_confirm_type, type = ifelse(type=="under", "Under-reacted (<1%pt)", type))
-df_confirm_type <- mutate(df_confirm_type, type = ifelse(type=="over", "Over-reacted (>1%pt)", type))
-df_confirm_type <- mutate(df_confirm_type, type = ifelse(type=="over much", "Over-reacted a lot", type))
-df_confirm_type <- mutate(df_confirm_type, type = ifelse(type=="wrong", "Wrong direction", type))
-df_confirm_type <- mutate(df_confirm_type, type = ifelse(type=="no change", "No update", type))
+names(df_conf_by_reaction)[names(df_conf_by_reaction) == "initial_reaction_conf"] <- "type"
+df_conf_by_reaction <- mutate(df_conf_by_reaction, type = ifelse(type=="correct", "Correctly reacted (+- 1%pt)", type))
+df_conf_by_reaction <- mutate(df_conf_by_reaction, type = ifelse(type=="under", "Under-reacted (<1%pt)", type))
+df_conf_by_reaction <- mutate(df_conf_by_reaction, type = ifelse(type=="over", "Over-reacted (>1%pt)", type))
+df_conf_by_reaction <- mutate(df_conf_by_reaction, type = ifelse(type=="over much", "Over-reacted a lot", type))
+df_conf_by_reaction <- mutate(df_conf_by_reaction, type = ifelse(type=="wrong", "Wrong direction", type))
+df_conf_by_reaction <- mutate(df_conf_by_reaction, type = ifelse(type=="no change", "No update", type))
 
 # Express beliefs in %
-df_confirm_type$belief_diff_pts <- df_confirm_type$belief_diff_sum*100
-df_confirm_type$SE_pts <- df_confirm_type$SE*100
+df_conf_by_reaction$belief_diff_pts <- df_conf_by_reaction$belief_diff_sum*100
+df_conf_by_reaction$SE_pts <- df_conf_by_reaction$SE*100
 
 # Restricted graph
-df_confirm_type_restricted <- df_confirm_type
+df_conf_by_reaction_clean <- df_conf_by_reaction
 
 # Rearranging complete
-df_confirm_type$type <- factor(df_confirm_type$type, levels = c("All", "Correctly reacted (+- 1%pt)", "Over-reacted (>1%pt)", "Over-reacted a lot", "Under-reacted (<1%pt)", "No update", "Wrong direction"))
+df_conf_by_reaction$type <- factor(df_conf_by_reaction$type, levels = c("All", "Correctly reacted (+- 1%pt)", "Over-reacted (>1%pt)", "Over-reacted a lot", "Under-reacted (<1%pt)", "No update", "Wrong direction"))
 
 
 # Restricted graph
-df_confirm_type_restricted <- df_confirm_type_restricted[df_confirm_type_restricted$type != "Wrong direction", ]
-df_confirm_type_restricted <- df_confirm_type_restricted[df_confirm_type_restricted$type != "No update", ]
-df_confirm_type_restricted <- df_confirm_type_restricted[df_confirm_type_restricted$type != "Over-reacted a lot", ]
+df_conf_by_reaction_clean <- df_conf_by_reaction_clean[df_conf_by_reaction_clean$type != "Wrong direction", ]
+df_conf_by_reaction_clean <- df_conf_by_reaction_clean[df_conf_by_reaction_clean$type != "No update", ]
+df_conf_by_reaction_clean <- df_conf_by_reaction_clean[df_conf_by_reaction_clean$type != "Over-reacted a lot", ]
 
 # Renaming
-df_confirm_type_restricted <- mutate(df_confirm_type_restricted, type = ifelse(type=="Over-reacted (>1%pt)", "Over-reacted (>1%pt)*", type))
-df_confirm_type_restricted <- mutate(df_confirm_type_restricted, type = ifelse(type=="Under-reacted (<1%pt)", "Under-reacted (<1%pt)**", type))
+df_conf_by_reaction_clean <- mutate(df_conf_by_reaction_clean, type = ifelse(type=="Over-reacted (>1%pt)", "Over-reacted (>1%pt)*", type))
+df_conf_by_reaction_clean <- mutate(df_conf_by_reaction_clean, type = ifelse(type=="Under-reacted (<1%pt)", "Under-reacted (<1%pt)**", type))
 
-df_confirm_type_restricted$type <- factor(df_confirm_type_restricted$type, levels = c("Correctly reacted (+- 1%pt)", "Over-reacted (>1%pt)*", "Under-reacted (<1%pt)**"))
+df_conf_by_reaction_clean$type <- factor(df_conf_by_reaction_clean$type, levels = c("Correctly reacted (+- 1%pt)", "Over-reacted (>1%pt)*", "Under-reacted (<1%pt)**"))
 
 
 # Influence of Confirmations- restricted
-fig_confirm_diff_restricted <- ggplot(df_confirm_type_restricted, aes(x = factor(type), y = belief_diff_pts)) +
+fig_confirm_diff_restricted <- ggplot(df_conf_by_reaction_clean, aes(x = factor(type), y = belief_diff_pts)) +
   geom_bar(stat="identity", width=0.9, fill = "white", colour = "black") +
   geom_errorbar(aes(ymin = belief_diff_pts - 1.96*SE_pts, ymax = belief_diff_pts + 1.96*SE_pts), position = position_dodge(0.9), width = 0.2) +
   geom_hline(yintercept=0, linetype="dashed") +
   scale_x_discrete(name = "Reaction to initial signal (comp. to Bayesian)", drop = FALSE) +
   scale_y_continuous(limits = c(-11, 5)) +
-  annotate("text", y=-11, x=1, label=paste0("n = ", df_confirm_type_restricted$n[1]), size=3) +
-  annotate("text", y=-11, x=2, label=paste0("n = ", df_confirm_type_restricted$n[2]), size=3) +
-  annotate("text", y=-11, x=3, label=paste0("n = ", df_confirm_type_restricted$n[3]), size=3) +
+  annotate("text", y=-11, x=1, label=paste0("n = ", df_conf_by_reaction_clean$n[1]), size=3) +
+  annotate("text", y=-11, x=2, label=paste0("n = ", df_conf_by_reaction_clean$n[2]), size=3) +
+  annotate("text", y=-11, x=3, label=paste0("n = ", df_conf_by_reaction_clean$n[3]), size=3) +
   ylab("Belief higher than Bayesian (%pts)") +
   labs(caption = "* not including observations with initial update further than confirmed signal,\n ** not including observations with initial update in wrong direction or no update.") +
   theme_classic()
@@ -210,18 +210,18 @@ if (.should_run("fig16")) {
 tryCatch({
 
 # Influence of Confirmations - complete
-fig_confirm_diff <- ggplot(df_confirm_type, aes(x = factor(type), y = belief_diff_pts)) +
+fig_confirm_diff <- ggplot(df_conf_by_reaction, aes(x = factor(type), y = belief_diff_pts)) +
   geom_bar(stat="identity", width=0.9, fill = "white", colour = "black") +
   geom_errorbar(aes(ymin = belief_diff_pts - 1.96*SE_pts, ymax = belief_diff_pts + 1.96*SE_pts), position = position_dodge(0.9), width = 0.2) +
   geom_hline(yintercept=0, linetype="dashed") +
   scale_x_discrete(name = "Reaction to initial signal (comp. to Bayesian)", drop = FALSE) +
   scale_y_continuous(limits = c(-21, 15)) +
-  annotate("text", y=-21, x=1, label=paste0("n = ", df_confirm_type$n[1]), size=3) +
-  annotate("text", y=-21, x=2, label=paste0("n = ", df_confirm_type$n[3]), size=3) +
-  annotate("text", y=-21, x=3, label=paste0("n = ", df_confirm_type$n[4]), size=3) +
-  annotate("text", y=-21, x=4, label=paste0("n = ", df_confirm_type$n[5]), size=3) +
-  annotate("text", y=-21, x=5, label=paste0("n = ", df_confirm_type$n[2]), size=3) +
-  annotate("text", y=-21, x=6, label=paste0("n = ", df_confirm_type$n[6]), size=3) +
+  annotate("text", y=-21, x=1, label=paste0("n = ", df_conf_by_reaction$n[1]), size=3) +
+  annotate("text", y=-21, x=2, label=paste0("n = ", df_conf_by_reaction$n[3]), size=3) +
+  annotate("text", y=-21, x=3, label=paste0("n = ", df_conf_by_reaction$n[4]), size=3) +
+  annotate("text", y=-21, x=4, label=paste0("n = ", df_conf_by_reaction$n[5]), size=3) +
+  annotate("text", y=-21, x=5, label=paste0("n = ", df_conf_by_reaction$n[2]), size=3) +
+  annotate("text", y=-21, x=6, label=paste0("n = ", df_conf_by_reaction$n[6]), size=3) +
   ylab("Belief higher than Bayesian (%pts)") +
   theme_classic()
 
@@ -274,7 +274,7 @@ if (.should_run("tab13")) {
 tryCatch({
 
 # create variable with all combinations of red and blue informative signals.
-df_main$inf_hist <- apply(str_extract_all(df_main$hist, pattern = "[a-z]_inf", simplify = TRUE),1,paste,collapse=" ")
+df_main$inf_hist <- apply(str_extract_all(df_main$signal_hist, pattern = "[a-z]_inf", simplify = TRUE),1,paste,collapse=" ")
 df_main$inf_hist <- gsub("_inf", "", df_main$inf_hist)
 df_main$inf_hist <- gsub(" ", "", df_main$inf_hist)
 df_main$inf_hist <- ifelse(is.na(df_main$inf_hist), "", df_main$inf_hist)
@@ -290,10 +290,10 @@ df_main_nouninf <- df_main[df_main$hist_uninf==0,]
 
 # Regression
 ols_inf_1a <-lm(belief ~ factor(inf_hist)
-                + factor(agg_hist), df_main)
+                + factor(aggregate_hist), df_main)
 
 ols_inf_1b <-lm(belief ~ factor(inf_hist)
-                + factor(agg_hist), df_main_nouninf)
+                + factor(aggregate_hist), df_main_nouninf)
 
 # Table with overview
 write_stargazer(ols_inf_1a,ols_inf_1b,
@@ -378,8 +378,8 @@ if (.should_run("tab_conf_cd")) {
 tryCatch({
 
 # Regressions
-ols_conf_cd <- lm(obslnpost ~ 0 + signal_ratio + prior_ratio, df_confirm)
-me_conf_cd <- lmer(obslnpost ~ 0 + signal_ratio + prior_ratio + (1 | id), df_confirm)
+ols_conf_cd <- lm(obs_log_post_ratio ~ 0 + signal_ratio + prior_ratio, df_confirm)
+me_conf_cd <- lmer(obs_log_post_ratio ~ 0 + signal_ratio + prior_ratio + (1 | id), df_confirm)
 
 # Table
 write_stargazer(ols_conf_cd, me_conf_cd,
@@ -387,7 +387,7 @@ write_stargazer(ols_conf_cd, me_conf_cd,
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
-          covariate.labels = c("Signal (c)", "Prior (d)"),
+          covariate.labels = c("Signal (d)", "Prior (c)"),
           no.space = TRUE,
           omit.stat = c("rsq", "f", "ser"),
           title = "Inference and Base-Rate Use: Confirmations",
@@ -577,11 +577,11 @@ if (.should_run("fig_conf_overreact_logodds")) {
 .tick("Figure -- Confirmation over-report by log prior odds")
 tryCatch({
 
-df_conf_logodds <- df_confirm %>%
+df_conf_prior_bins <- df_confirm %>%
   filter(prior_aligned > 0 & prior_aligned < 1) %>%
   mutate(log_prior_odds = log(prior_aligned / (1 - prior_aligned)))
 
-fig_conf_overreact_lo <- ggplot(df_conf_logodds, aes(x = log_prior_odds, y = over_report)) +
+fig_conf_overreact_lo <- ggplot(df_conf_prior_bins, aes(x = log_prior_odds, y = over_report)) +
   geom_point(alpha = 0.1, size = 1) +
   geom_smooth(method = "loess", colour = "black", fill = "grey70") +
   geom_hline(yintercept = 0, linetype = "dashed") +

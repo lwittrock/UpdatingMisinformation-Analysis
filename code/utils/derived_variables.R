@@ -7,7 +7,7 @@
 #          hidden cross-section dependencies.
 # Inputs:  data/processed/*.rda
 # Outputs: Loaded dataframes with additional derived columns:
-#          - df_regular: overreport_avg_id, overreport_variance_id, c
+#          - df_regular: overreport_avg_id, overreport_variance_id, confirms_prior
 #          - df_retract: overreport_avg_id, overreport_variance_id,
 #                        prior_aligned, prior_aligned_bin, belief_lag2_bin
 #          - df_confirm: prior_aligned, belief_lag2_bin
@@ -39,17 +39,17 @@ load(file = paste0(inpath, "/data_informative.rda"))
 
 # Subject-level over-report avg and variance (originally in fig13)
 # Used by: fig13, tab15, tab7
-df_regular_type <- df_regular %>%
+df_reg_subject_stats <- df_regular %>%
   group_by(id) %>%
   summarise(overreport_avg_id = mean(over_report, na.rm = TRUE),
             overreport_variance_id = var(over_report, na.rm = TRUE),
             id = mean(id))
-df_regular <- merge(df_regular, df_regular_type, by = "id")
-df_retract <- merge(df_retract, df_regular_type, by = "id")
+df_regular <- merge(df_regular, df_reg_subject_stats, by = "id")
+df_retract <- merge(df_retract, df_reg_subject_stats, by = "id")
 
 # Confirmation bias check variable (originally in fig12)
 # Used by: fig12 (me_regular_c regression)
-df_regular <- mutate(df_regular, c = ifelse(sign(prior_ratio) == sign(signal_ratio), 1, 0))
+df_regular <- mutate(df_regular, confirms_prior = ifelse(sign(prior_ratio) == sign(signal_ratio), 1, 0))
 
 # Prior aligned with signal direction on df_retract (originally in fig_ret_overreact_prior / tab_ret_prior)
 # Used by: tab_ret_prior, fig_ret_prior, fig_ret_overreact_prior, fig_ret_response_prior, tab_ret_persist_prior
@@ -74,12 +74,12 @@ df_confirm$belief_lag2_bin <- relevel(factor(df_confirm$belief_lag2_bin), ref = 
 ######################################################
 # Per-subject coefficient estimates (originally in fig12)
 # Fits the mixed-effects model and extracts per-subject
-# inference (c) and base-rate use (d) coefficients.
+# inference (d) and base-rate use (c) coefficients.
 # Used by: tab7 (retraction types analysis)
 ######################################################
 cat(">> Fitting mixed-effects model for per-subject coefficients...\n")
 
-me_regular <- lmer(obslnpost ~ signal_ratio + prior_ratio + (1 + signal_ratio + prior_ratio|id), df_regular)
+me_regular <- lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio + (1 + signal_ratio + prior_ratio|id), df_regular)
 
 coef_me <- coef(me_regular)
 df_coef <- as.data.frame(coef_me$id)

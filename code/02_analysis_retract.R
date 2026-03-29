@@ -35,26 +35,26 @@ if (.should_run("fig5")) {
 tryCatch({
 
 # Summary per type - SE grouped by subject
-df_retract_type_initial <- df_retract %>%
+df_ret_by_initial <- df_retract %>%
   group_by(initial_reaction_alt, id, treat) %>%
   summarise(belief_diff = mean(-over_report, na.rm = TRUE),
             n = length(id))
 
-df_retract_type <- df_retract_type_initial %>%
+df_ret_by_reaction <- df_ret_by_initial %>%
   group_by(initial_reaction_alt) %>%
   summarise(belief_diff_sum = weighted.mean(belief_diff, n, na.rm = TRUE),
             SE = std.error(belief_diff, na.rm = TRUE),
             n = sum(n))
 
 # Adjusting names for graph
-names(df_retract_type)[names(df_retract_type) == "initial_reaction_alt"] <- "type"
-df_retract_type <- mutate(df_retract_type, type = ifelse(type=="correct", "Correctly reacted (+- 1%pt)", type))
-df_retract_type <- mutate(df_retract_type, type = ifelse(type=="under", "Under-reacted (<1%pt)*", type))
-df_retract_type <- mutate(df_retract_type, type = ifelse(type=="over", "Over-reacted (>1%pt)", type))
-df_retract_type <- mutate(df_retract_type, type = ifelse(type=="wrong", "Wrong direction", type))
+names(df_ret_by_reaction)[names(df_ret_by_reaction) == "initial_reaction_alt"] <- "type"
+df_ret_by_reaction <- mutate(df_ret_by_reaction, type = ifelse(type=="correct", "Correctly reacted (+- 1%pt)", type))
+df_ret_by_reaction <- mutate(df_ret_by_reaction, type = ifelse(type=="under", "Under-reacted (<1%pt)*", type))
+df_ret_by_reaction <- mutate(df_ret_by_reaction, type = ifelse(type=="over", "Over-reacted (>1%pt)", type))
+df_ret_by_reaction <- mutate(df_ret_by_reaction, type = ifelse(type=="wrong", "Wrong direction", type))
 
 # Summary data all
-df_retract_sum_all <- df_retract_type_initial %>%
+df_ret_response_summary <- df_ret_by_initial %>%
   group_by() %>%
   summarise(belief_diff_sum = weighted.mean(belief_diff, n, na.rm = TRUE),
             SE = std.error(belief_diff, na.rm = TRUE),
@@ -62,27 +62,27 @@ df_retract_sum_all <- df_retract_type_initial %>%
             type = "All Retractions")
 
 # Merging all and per type
-df_retract_sum <- rbind(df_retract_sum_all, df_retract_type)
+df_ret_response_labeled <- rbind(df_ret_response_summary, df_ret_by_reaction)
 
 # Remove wrong for graph
-df_retract_sum <- df_retract_sum[df_retract_sum$type != "Wrong direction", ]
+df_ret_response_labeled <- df_ret_response_labeled[df_ret_response_labeled$type != "Wrong direction", ]
 
 # Express beliefs in %
-df_retract_sum$belief_diff_pts <- df_retract_sum$belief_diff_sum*100
-df_retract_sum$SE_pts <- df_retract_sum$SE*100
-df_retract_sum$type <- factor(df_retract_sum$type, levels = c("Correctly reacted (+- 1%pt)", "Over-reacted (>1%pt)", "Under-reacted (<1%pt)*", "All Retractions"))
+df_ret_response_labeled$belief_diff_pts <- df_ret_response_labeled$belief_diff_sum*100
+df_ret_response_labeled$SE_pts <- df_ret_response_labeled$SE*100
+df_ret_response_labeled$type <- factor(df_ret_response_labeled$type, levels = c("Correctly reacted (+- 1%pt)", "Over-reacted (>1%pt)", "Under-reacted (<1%pt)*", "All Retractions"))
 
 # Influence of retraced signals - belief difference
-fig_retract_diff_group <- ggplot(df_retract_sum, aes(x = type, y = belief_diff_pts)) +
+fig_retract_diff_group <- ggplot(df_ret_response_labeled, aes(x = type, y = belief_diff_pts)) +
   geom_bar(stat="identity", width=0.9, fill = "white", colour = "black") +
   geom_errorbar(aes(ymin = belief_diff_pts - 1.96*SE_pts, ymax = belief_diff_pts + 1.96*SE_pts), position = position_dodge(0.9), width = 0.2) +
   geom_hline(yintercept=0, linetype="dashed") +
   scale_x_discrete(name = "Reaction to initial signal (relative to Bayesian)", drop = FALSE) +
   scale_y_continuous(limits = c(-5.5, 13)) +
-  annotate("text", y=-5.5, x=1, label=paste0("n = ", df_retract_sum$n[2]), size=3) +
-  annotate("text", y=-5.5, x=2, label=paste0("n = ", df_retract_sum$n[3]), size=3) +
-  annotate("text", y=-5.5, x=3, label=paste0("n = ", df_retract_sum$n[4]), size=3) +
-  annotate("text", y=-5.5, x=4, label=paste0("n = ", df_retract_sum$n[1]), size=3) +
+  annotate("text", y=-5.5, x=1, label=paste0("n = ", df_ret_response_labeled$n[2]), size=3) +
+  annotate("text", y=-5.5, x=2, label=paste0("n = ", df_ret_response_labeled$n[3]), size=3) +
+  annotate("text", y=-5.5, x=3, label=paste0("n = ", df_ret_response_labeled$n[4]), size=3) +
+  annotate("text", y=-5.5, x=4, label=paste0("n = ", df_ret_response_labeled$n[1]), size=3) +
   ylab("Belief biased towards initial signal (%pts)") +
   theme_classic()
 
@@ -101,38 +101,38 @@ tryCatch({
 
 # Preparation
 df_main_ver <- df_main[!is.na(df_main$two_balls),]
-df_regular_mixedballs <- df_main_ver[df_main_ver$two_balls=="BR" | df_main_ver$two_balls=="RB",]
+df_reg_opposite_signals <- df_main_ver[df_main_ver$two_balls=="BR" | df_main_ver$two_balls=="RB",]
 
 # Summary data all
-df_regular_sum_all <- df_regular_mixedballs %>%
+df_regular_sum_all <- df_reg_opposite_signals %>%
   summarise(belief_diff_sum = mean(-over_report2, na.rm = TRUE),
             SE = std.error(-over_report2, na.rm = TRUE),
             n = length(id),
             type = "All Retractions/ Opposite Signals")
 
 # Merging relevant data
-df_retract_opposite_all <- rbind(df_regular_sum_all, df_retract_sum_all)
-df_retract_opposite_all <- mutate(df_retract_opposite_all, type = ifelse(type=="All Retractions/ Opposite Signals", "Opposite New Information", type))
-df_retract_opposite_all <- mutate(df_retract_opposite_all, type = ifelse(type=="All Retractions", "Retraction", type))
+df_ret_vs_opposite <- rbind(df_regular_sum_all, df_ret_response_summary)
+df_ret_vs_opposite <- mutate(df_ret_vs_opposite, type = ifelse(type=="All Retractions/ Opposite Signals", "Opposite New Information", type))
+df_ret_vs_opposite <- mutate(df_ret_vs_opposite, type = ifelse(type=="All Retractions", "Retraction", type))
 
-df_retract_opposite_all$belief_diff_pts <- df_retract_opposite_all$belief_diff_sum*100
-df_retract_opposite_all$SE_pts <- df_retract_opposite_all$SE*100
+df_ret_vs_opposite$belief_diff_pts <- df_ret_vs_opposite$belief_diff_sum*100
+df_ret_vs_opposite$SE_pts <- df_ret_vs_opposite$SE*100
 
 # Plot
 fig_regular_diff_group_all <- ggplot(NULL, ) +
   geom_col(aes(x = type, y = belief_diff_pts),
-           data = df_retract_opposite_all, width=0.9,
+           data = df_ret_vs_opposite, width=0.9,
            fill = "white", color = "black", alpha = 0.5) +
   geom_errorbar(aes(x = type, y = belief_diff_pts,
                     ymin = belief_diff_pts - 1.96*SE_pts,
                     ymax = belief_diff_pts + 1.96*SE_pts),
-                data = df_retract_opposite_all, position = position_dodge(0.2),
+                data = df_ret_vs_opposite, position = position_dodge(0.2),
                 width = 0.2, color = "black") +
   geom_hline(yintercept=0, linetype="dashed") +
   scale_x_discrete(name = "", drop = FALSE) +
   scale_y_continuous(limits = c(-6, 2.5)) +
-  annotate("text", y=-6, x=1, label=paste0("n = ", df_retract_opposite_all$n[1]), size=3, color="black") +
-  annotate("text", y=-6, x=2, label=paste0("n = ", df_retract_opposite_all$n[2]), size=3, color="black") +
+  annotate("text", y=-6, x=1, label=paste0("n = ", df_ret_vs_opposite$n[1]), size=3, color="black") +
+  annotate("text", y=-6, x=2, label=paste0("n = ", df_ret_vs_opposite$n[2]), size=3, color="black") +
   ylab("Belief biased towards initial signal (%pts)") +
   theme_classic()
 
@@ -150,13 +150,13 @@ if (.should_run("fig14")) {
 tryCatch({
 
 # Restricting data to make graph clearer - 55obs less.
-df_retract_no_outliers <- df_retract[df_retract$belief_change_adj <= 0.75
+df_ret_robust <- df_retract[df_retract$belief_change_adj <= 0.75
                                      & df_retract$belief_change_adj >= -0.25
                                      & df_retract$belief_change_adj_lag1 <= 0.75
                                      & df_retract$belief_change_adj_lag1 >= -0.25, ]
 
 # Plot formatting
-fig_retract_change_basic <- ggplot(df_retract_no_outliers, aes(x = belief_change_adj_lag1, y = -belief_change_adj)) +
+fig_retract_change_basic <- ggplot(df_ret_robust, aes(x = belief_change_adj_lag1, y = -belief_change_adj)) +
   geom_abline(slope = -1, intercept = 0, linetype = "dashed", size = 1, alpha = 0.75) +
   geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.75) +
   geom_vline(xintercept = 0, linetype = "dotted", alpha = 0.75) +
@@ -191,17 +191,17 @@ if (.should_run("fig15")) {
 tryCatch({
 
 # Restricting data to make graph clearer - 43 obs less.
-df_retract_no_outliers <- df_retract[df_retract$over_report <= 0.5
+df_ret_robust <- df_retract[df_retract$over_report <= 0.5
                                      & df_retract$over_report >= -0.5
                                      & df_retract$over_report_lag1 <= 0.5
                                      & df_retract$over_report_lag1 >= -0.5, ]
 
 # Beliefs in % for graph
-df_retract_no_outliers$over_report_lag1_pts <- df_retract_no_outliers$over_report_lag1*100
-df_retract_no_outliers$under_report_pts <- -df_retract_no_outliers$over_report*100
+df_ret_robust$over_report_lag1_pts <- df_ret_robust$over_report_lag1*100
+df_ret_robust$under_report_pts <- -df_ret_robust$over_report*100
 
 # Plot
-fig_retract_diff_cont <- ggplot(df_retract_no_outliers, aes(x = over_report_lag1_pts, y = under_report_pts)) +
+fig_retract_diff_cont <- ggplot(df_ret_robust, aes(x = over_report_lag1_pts, y = under_report_pts)) +
   geom_jitter(alpha = 0.3) +
   geom_abline(slope = 0, intercept = 0, linetype = "dashed") +
   geom_vline(xintercept = 0, linetype = "dashed") +
@@ -224,11 +224,11 @@ if (.should_run("tab4")) {
 tryCatch({
 
 # Regression
-ols_retract_5_main <- lm(over_report_ret ~ over_report_lag1, df_retract)
+ols_ret_persistence <- lm(over_report_ret ~ over_report_lag1, df_retract)
 
 # Table with overview
-write_stargazer(ols_retract_5_main,
-          se = starprep(ols_retract_5_main, clusters = df_retract$id),
+write_stargazer(ols_ret_persistence,
+          se = starprep(ols_ret_persistence, clusters = df_retract$id),
           type = output_type,
           style = "default",
           dep.var.labels = c("Belief minus Bayesian Posterior"),
@@ -253,10 +253,10 @@ if (.should_run("tab5")) {
 tryCatch({
 
 # variable indicating retraction
-df_main$ver_retract_all <- ifelse(df_main$ver_retract==1 & !is.na(df_main$ver_retract), 1, 0)
+df_main$ver_retract_all <- ifelse(df_main$is_retraction==1 & !is.na(df_main$is_retraction), 1, 0)
 
 # create variable with all combinations of red and blue retractions. Otherwise potential confounds.
-df_main$ret_hist <- apply(str_extract_all(df_main$hist, pattern = "[a-z]_ret", simplify = TRUE),1,paste,collapse=" ")
+df_main$ret_hist <- apply(str_extract_all(df_main$signal_hist, pattern = "[a-z]_ret", simplify = TRUE),1,paste,collapse=" ")
 
 df_main$ret_hist <- gsub("_ret", "", df_main$ret_hist)
 df_main$ret_hist <- gsub(" ", "", df_main$ret_hist)
@@ -275,16 +275,16 @@ df_main_noconf <- df_main[df_main$hist_conf==0,]
 df_main_t1 <- df_main[df_main$treat_aggregate_signal==0,]
 
 # Regressions
-ols_retract_6a <-lm(belief ~ ver_retract_all + factor(ret_hist)
-                    + factor(comp_hist), df_main_t1)
+ols_ret_comp_hist <-lm(belief ~ ver_retract_all + factor(ret_hist)
+                    + factor(compressed_hist), df_main_t1)
 
-ols_retract_6b <-lm(belief ~ ver_retract_all + factor(ret_hist)
-                    + factor(comp_hist) + factor(round), df_main_t1)
+ols_ret_comp_hist_round <-lm(belief ~ ver_retract_all + factor(ret_hist)
+                    + factor(compressed_hist) + factor(round), df_main_t1)
 
 
 # Table with overview
-write_stargazer(ols_retract_6a, ols_retract_6b,
-          #se = starprep(ols_retract_6a, ols_retract_6b, clusters = df_main$id), # horribly slow.
+write_stargazer(ols_ret_comp_hist, ols_ret_comp_hist_round,
+          #se = starprep(ols_ret_comp_hist, ols_ret_comp_hist_round, clusters = df_main$id), # horribly slow.
           type = output_type,
           style = "default",
           dep.var.labels = c("Reported Belief"),
@@ -316,9 +316,9 @@ tryCatch({
 df_retcon <- df_main[df_main$verify_round == 1,]
 
 # Regressions with objective signal ratio
-ols_retract_obj <- lm(obslnpost ~ 0 + signal_ratio_obj + prior_ratio, df_retract)
-ols_confirm_obj <- lm(obslnpost ~ 0 + signal_ratio_obj + prior_ratio, df_confirm)
-ols_retcon_obj  <- lm(obslnpost ~ 0 + signal_ratio_obj + prior_ratio, df_retcon)
+ols_retract_obj <- lm(obs_log_post_ratio ~ 0 + signal_ratio_obj + prior_ratio, df_retract)
+ols_confirm_obj <- lm(obs_log_post_ratio ~ 0 + signal_ratio_obj + prior_ratio, df_confirm)
+ols_retcon_obj  <- lm(obs_log_post_ratio ~ 0 + signal_ratio_obj + prior_ratio, df_retcon)
 
 # Table with overview
 write_stargazer(ols_retract_obj, ols_confirm_obj, ols_retcon_obj,
@@ -361,10 +361,10 @@ df_retract$inference_adj <- df_retract$inference - 1
 df_retract$base_rate_use_adj <- df_retract$base_rate_use - 1
 
 # Preparation 3
-df_regular_type_number <- df_regular %>%
+df_reg_type_counts <- df_regular %>%
   group_by(id, reaction_alt) %>%
   summarise(id = mean(id), n = length(belief), type_subject = first(reaction_alt))
-df_regular_type_id <- df_regular_type_number %>%
+df_regular_type_id <- df_reg_type_counts %>%
   group_by(id) %>%
   filter(n == max(n))
 df_regular_type_id <- mutate(df_regular_type_id, type_subject = ifelse(n<5, "Not categorized", type_subject))
@@ -374,14 +374,14 @@ df_regular_type_id <- unique(df_regular_type_id)
 df_retract <- merge(df_retract, df_regular_type_id, by="id")
 
 # Regressions
-ols_retract_5_types1 <- lm(over_report_ret ~ over_report_lag1 + overreport_avg, df_retract)
-ols_retract_5_types2 <- lm(over_report_ret ~ over_report_lag1 + inference_adj + base_rate_use_adj, df_retract)
-ols_retract_5_types3 <- lm(over_report_ret ~ over_report_lag1 + type_subject, df_retract)
-ols_retract_5_types4 <- lm(over_report_ret ~ over_report_lag1 + factor(id), df_retract)
+ols_ret_by_avg <- lm(over_report_ret ~ over_report_lag1 + overreport_avg, df_retract)
+ols_ret_by_cd <- lm(over_report_ret ~ over_report_lag1 + inference_adj + base_rate_use_adj, df_retract)
+ols_ret_by_type <- lm(over_report_ret ~ over_report_lag1 + type_subject, df_retract)
+ols_ret_by_subject_fe <- lm(over_report_ret ~ over_report_lag1 + factor(id), df_retract)
 
 # Table with overview
-write_stargazer(ols_retract_5_types1, ols_retract_5_types2, ols_retract_5_types3, ols_retract_5_types4,
-          se = starprep(ols_retract_5_types1, ols_retract_5_types2, ols_retract_5_types3, clusters = df_retract$id),
+write_stargazer(ols_ret_by_avg, ols_ret_by_cd, ols_ret_by_type, ols_ret_by_subject_fe,
+          se = starprep(ols_ret_by_avg, ols_ret_by_cd, ols_ret_by_type, clusters = df_retract$id),
           keep = c("Constant", "over_report_lag1", "type_subject", "inference", "base_rate", "overreport_avg"),
           type = output_type,
           style = "default",
@@ -389,8 +389,8 @@ write_stargazer(ols_retract_5_types1, ols_retract_5_types2, ols_retract_5_types3
           covariate.labels = c("Constant",
                                "Initial belief over-report",
                                "Average belief over-report",
-                               "Average inference (c-1)",
-                               "Average base-rate use (d-1)",
+                               "Average inference (d-1)",
+                               "Average base-rate use (c-1)",
                                "Type: Not categorized",
                                "Type: Majority Over-reported",
                                "Type: Majority Under-reported",
@@ -415,15 +415,15 @@ if (.should_run("tab8")) {
 tryCatch({
 
 # Regressions
-ols_retract_5_expl1 <- lm(over_report_ret ~ over_report_lag1 + over_report_lag2, df_retract)
+ols_ret_lag2 <- lm(over_report_ret ~ over_report_lag1 + over_report_lag2, df_retract)
 
-ols_retract_5_expl2 <- lm(over_report_ret ~ over_report_lag1*treat_no_anchor
+ols_ret_treat <- lm(over_report_ret ~ over_report_lag1*treat_no_anchor
                           + over_report_lag1*treat_no_history, df_retract)
 
 
 # Table with overview
-write_stargazer(ols_retract_5_expl1, ols_retract_5_expl2,
-          se = starprep(ols_retract_5_expl1, ols_retract_5_expl2, clusters = df_retract$id),
+write_stargazer(ols_ret_lag2, ols_ret_treat,
+          se = starprep(ols_ret_lag2, ols_ret_treat, clusters = df_retract$id),
           type = output_type,
           style = "default",
           dep.var.labels = c("Belief biased towards initial signal"),
@@ -447,10 +447,10 @@ if (.should_run("tab9")) {
 tryCatch({
 
 # Regression
-ols_retract_9 <- lm(belief_diff_priorinduced_adj ~ over_report_lag1, df_retract)
+ols_ret_induced_prior <- lm(belief_dev_induced_adj ~ over_report_lag1, df_retract)
 
 # Table with overview
-write_stargazer(ols_retract_9,
+write_stargazer(ols_ret_induced_prior,
           type = output_type,
           style = "default",
           dep.var.labels = c("Belief higher than induced Prior after Retraction"),
@@ -478,14 +478,14 @@ df_main <- mutate(df_main, signal_direction = ifelse(two_balls == "BR", -1, sign
 df_main <- mutate(df_main, signal_direction = ifelse(two_balls == "RB", 1, signal_direction))
 df_main <- mutate(df_main, signal_direction = ifelse(is.na(signal_direction), 0, signal_direction))
 
-df_main$ver_retract_all <- ifelse(df_main$ver_retract==1 & !is.na(df_main$ver_retract), 1, 0)
+df_main$ver_retract_all <- ifelse(df_main$is_retraction==1 & !is.na(df_main$is_retraction), 1, 0)
 
 # Regression
-ols_retract_10a <-lm(belief ~ ver_retract_all*signal_direction
-                     + factor(sign_hist), df_main[df_main$aggregate_round==0,])
+ols_ret_vs_opposite <-lm(belief ~ ver_retract_all*signal_direction
+                     + factor(sign_adjusted_hist), df_main[df_main$aggregate_round==0,])
 
 # Output
-write_stargazer(ols_retract_10a,
+write_stargazer(ols_ret_vs_opposite,
           type = output_type,
           style = "default",
           dep.var.labels = c("Reported Belief", "Belief higher than Bayesian"),
@@ -510,12 +510,12 @@ if (.should_run("fig9")) {
 tryCatch({
 
 # Summary per type - SE grouped by subject
-df_uninformative_id <- df_uninformative %>%
+df_uninf_subject_stats <- df_uninformative %>%
   group_by(id) %>%
   summarise(belief_diff = mean(over_report, na.rm = TRUE),
             n = length(id))
 
-df_uninformative_sum <- df_uninformative_id %>%
+df_uninf_summary <- df_uninf_subject_stats %>%
   group_by() %>%
   summarise(belief_diff_sum = weighted.mean(belief_diff, n, na.rm = TRUE),
             SE = std.error(belief_diff, na.rm = TRUE),
@@ -523,7 +523,7 @@ df_uninformative_sum <- df_uninformative_id %>%
             type = "Uninformative Signal")
 
 # Merging with summary data on retractions
-df_retract_uninformative <- rbind(df_uninformative_sum, df_retract_sum_all)
+df_retract_uninformative <- rbind(df_uninf_summary, df_ret_response_summary)
 df_retract_uninformative$type <- ifelse(df_retract_uninformative$type == "All Retractions", "Signal + Retraction", df_retract_uninformative$type)
 
 # Express beliefs in %
@@ -687,16 +687,6 @@ fig_variance_retract_uninf_all <- arrangeGrob(grobs=lapply(c(1,4), function(i) {
 # Final output
 ggsave(fig_path("retract", "fig_variance_vs_uninf"), plot = fig_variance_retract_uninf_all, width = fig_width, height = fig_height, units = "in", dpi = set_dpi)
 
-# Calculate variances
-var(df_uninformative1$belief_diff)
-var(df_retract1$belief_diff1)
-
-var(df_uninformative2$belief_diff2)
-var(df_retract2$belief_diff2)
-
-var(df_uninformative3$belief_diff3)
-var(df_retract3$belief_diff3)
-
 }, error = .fail)
 }
 
@@ -709,7 +699,7 @@ if (.should_run("tab12")) {
 tryCatch({
 
 # Preparation: create variable with all combinations of red and blue uninformative signals.
-df_main$uninf_hist <- apply(str_extract_all(df_main$hist, pattern = "[a-z]_uninf", simplify = TRUE),1,paste,collapse=" ")
+df_main$uninf_hist <- apply(str_extract_all(df_main$signal_hist, pattern = "[a-z]_uninf", simplify = TRUE),1,paste,collapse=" ")
 df_main$uninf_hist <- gsub("_uninf", "", df_main$uninf_hist)
 df_main$uninf_hist <- gsub(" ", "", df_main$uninf_hist)
 df_main$uninf_hist <- ifelse(is.na(df_main$uninf_hist), "", df_main$uninf_hist)
@@ -722,7 +712,7 @@ df_main$uninf_hist <- factor(df_main$uninf_hist,levels=ord)
 
 # Regression
 ols_uninf_1a <-lm(belief ~ factor(uninf_hist)
-                  + factor(agg_hist), df_main)
+                  + factor(aggregate_hist), df_main)
 
 # Table with overview
 write_stargazer(ols_uninf_1a,
@@ -756,8 +746,8 @@ if (.should_run("tab_ret_cd")) {
 tryCatch({
 
 # Regressions
-ols_ret_cd <- lm(obslnpost ~ 0 + signal_ratio + prior_ratio, df_retract)
-me_ret_cd <- lmer(obslnpost ~ 0 + signal_ratio + prior_ratio + (1 | id), df_retract)
+ols_ret_cd <- lm(obs_log_post_ratio ~ 0 + signal_ratio + prior_ratio, df_retract)
+me_ret_cd <- lmer(obs_log_post_ratio ~ 0 + signal_ratio + prior_ratio + (1 | id), df_retract)
 
 # Table
 write_stargazer(ols_ret_cd, me_ret_cd,
@@ -765,7 +755,7 @@ write_stargazer(ols_ret_cd, me_ret_cd,
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
-          covariate.labels = c("Signal (c)", "Prior (d)"),
+          covariate.labels = c("Signal (d)", "Prior (c)"),
           no.space = TRUE,
           omit.stat = c("rsq", "f", "ser"),
           title = "Inference and Base-Rate Use: Retractions",

@@ -66,8 +66,8 @@ tryCatch({
 
 # Regressions
 # me_regular is already fitted in derived_variables.R
-ols_regular <- lm(obslnpost ~ signal_ratio + prior_ratio, df_regular)
-me_regular_c <- lmer(obslnpost ~ signal_ratio + prior_ratio + signal_ratio:c + (1 + signal_ratio + prior_ratio|id), df_regular)
+ols_regular <- lm(obs_log_post_ratio ~ signal_ratio + prior_ratio, df_regular)
+me_regular_c <- lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio + signal_ratio:confirms_prior + (1 + signal_ratio + prior_ratio|id), df_regular)
 
 # Table with overview
 write_stargazer(ols_regular, me_regular, me_regular_c,
@@ -90,14 +90,14 @@ write_stargazer(ols_regular, me_regular, me_regular_c,
 # Plotting (df_coef created in derived_variables.R)
 fig_regular_inference <- ggplot(df_coef, aes(x = inference)) +
   geom_histogram(binwidth = 0.1, fill = "white", color = "black") +
-  xlab("Estimated Inference (c) per Subject") +
+  xlab("Estimated Inference (d) per Subject") +
   ylab("Count") +
   ggtitle("Inference Bias") +
   theme_classic()
 
 fig_regular_baserate <- ggplot(df_coef, aes(x = base_rate_use)) +
   geom_histogram(binwidth = 0.05, fill = "white", color = "black") +
-  xlab("Estimated Base-Rate Use (d) per Subject") +
+  xlab("Estimated Base-Rate Use (c) per Subject") +
   ylab("Count") +
   ggtitle("Base-Rate Use") +
   theme_classic()
@@ -130,7 +130,7 @@ if (.should_run("tab3")) {
 tryCatch({
 
 # Regression
-ols_regular_treat <- lm(obslnpost ~ signal_ratio*factor(treat) + prior_ratio*factor(treat), df_regular[df_regular$aggregate_round==0,])
+ols_regular_treat <- lm(obs_log_post_ratio ~ signal_ratio*factor(treat) + prior_ratio*factor(treat), df_regular[df_regular$aggregate_round==0,])
 
 # Table with overview
 write_stargazer(ols_regular_treat,
@@ -166,13 +166,13 @@ df_regular_sum <- df_regular %>%
             overreport_med = median(over_report, na.rm = TRUE))
 
 # Graph types - Avg and Var
-fig_belief_overreport_type <- ggplot(df_regular_type, aes(x = overreport_avg_id)) +
+fig_belief_overreport_type <- ggplot(df_reg_subject_stats, aes(x = overreport_avg_id)) +
   geom_histogram(binwidth = 0.025, fill = "white", colour = "black") +
   scale_x_continuous(name = "Average of Over-Reported Belief") +
   scale_y_continuous(name = "Count") +
   theme_minimal()
 
-fig_belief_overreporting_type_var <- ggplot(df_regular_type, aes(x = overreport_variance_id)) +
+fig_belief_overreporting_type_var <- ggplot(df_reg_subject_stats, aes(x = overreport_variance_id)) +
   geom_histogram(binwidth = 0.01, fill = "white", colour = "black") +
   scale_x_continuous(name = "Variance of Over-Reported Beliefs") +
   scale_y_continuous(name = "Count") +
@@ -226,49 +226,49 @@ tryCatch({
 # Preparation
 df_regular$belief_lag_extreme <- abs(df_regular$belief_lag1-0.5)
 
-df_regular$conf_other <- df_regular$conf_total - df_regular$conf_same
-df_regular$ret_other <- df_regular$ret_total - df_regular$ret_same
+df_regular$conf_diff_color <- df_regular$conf_total - df_regular$conf_same_color
+df_regular$ret_diff_color <- df_regular$ret_total - df_regular$ret_same_color
 
-df_regular$ver_other <- df_regular$ret_other + df_regular$conf_other
-df_regular$ver_same <- df_regular$ret_same + df_regular$conf_same
+df_regular$ver_diff_color <- df_regular$ret_diff_color + df_regular$conf_diff_color
+df_regular$ver_same_color <- df_regular$ret_same_color + df_regular$conf_same_color
 
-df_regular$prev_ret <- df_regular$ret_other + df_regular$ret_same
-df_regular$prev_conf <- df_regular$conf_other + df_regular$conf_same
+df_regular$cum_ret <- df_regular$ret_diff_color + df_regular$ret_same_color
+df_regular$cum_conf <- df_regular$conf_diff_color + df_regular$conf_same_color
 
 
 # Regressions
-me_regular_expl1 <- lmer(obslnpost ~ signal_ratio + prior_ratio
+me_reg_by_prev_ver <- lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio
                          + prior_ratio:round
                          + signal_ratio:round
                          + signal_ratio:prev_verified
                          + (1 + signal_ratio + prior_ratio|id), df_regular[df_regular$treat_aggregate_signal==0,])
 
-me_regular_expl2 <- lmer(obslnpost ~ signal_ratio + prior_ratio
+me_reg_by_prev_ret_conf <- lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio
                          + prior_ratio:round
                          + signal_ratio:round
-                         + signal_ratio:prev_ret
-                         + signal_ratio:prev_conf
+                         + signal_ratio:cum_ret
+                         + signal_ratio:cum_conf
                          + (1 + signal_ratio + prior_ratio|id), df_regular[df_regular$treat_aggregate_signal==0,])
 
-me_regular_expl3 <- lmer(obslnpost ~ signal_ratio + prior_ratio
+me_reg_by_same_other <- lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio
                          + prior_ratio:round
                          + signal_ratio:round
-                         + signal_ratio:ver_same
-                         + signal_ratio:ver_other
+                         + signal_ratio:ver_same_color
+                         + signal_ratio:ver_diff_color
                          + (1 + signal_ratio + prior_ratio|id), df_regular[df_regular$treat_aggregate_signal==0,])
 
 
-me_regular_expl4 <- lmer(obslnpost ~ signal_ratio + prior_ratio
+me_reg_by_same_other_split <- lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio
                          + prior_ratio:round
                          + signal_ratio:round
-                         + signal_ratio:ret_same
-                         + signal_ratio:conf_same
-                         + signal_ratio:ret_other
-                         + signal_ratio:conf_other
+                         + signal_ratio:ret_same_color
+                         + signal_ratio:conf_same_color
+                         + signal_ratio:ret_diff_color
+                         + signal_ratio:conf_diff_color
                          + (1 + signal_ratio + prior_ratio|id), df_regular[df_regular$treat_aggregate_signal==0,])
 
 # Table with overview
-write_stargazer(me_regular_expl1, me_regular_expl2, me_regular_expl3, me_regular_expl4,
+write_stargazer(me_reg_by_prev_ver, me_reg_by_prev_ret_conf, me_reg_by_same_other, me_reg_by_same_other_split,
           type = output_type,
           style = "default",
           dep.var.labels = c("Observed Log-Posterior-Ratio"),
@@ -302,18 +302,18 @@ ols_regular_belief_change1 <- lm(belief_change_adj ~ round
                                  + prev_verified, df_regular[df_regular$treat_aggregate_signal==0,])
 
 ols_regular_belief_change2 <- lm(belief_change_adj ~ round
-                                 + prev_ret
-                                 + prev_conf, df_regular[df_regular$treat_aggregate_signal==0,])
+                                 + cum_ret
+                                 + cum_conf, df_regular[df_regular$treat_aggregate_signal==0,])
 
 ols_regular_belief_change3 <- lm(belief_change_adj ~ round
-                                 + ver_same
-                                 + ver_other, df_regular[df_regular$treat_aggregate_signal==0,])
+                                 + ver_same_color
+                                 + ver_diff_color, df_regular[df_regular$treat_aggregate_signal==0,])
 
 ols_regular_belief_change4 <- lm(belief_change_adj ~ round
-                                 + ret_same
-                                 + conf_same
-                                 + ret_other
-                                 + conf_other, df_regular[df_regular$treat_aggregate_signal==0,])
+                                 + ret_same_color
+                                 + conf_same_color
+                                 + ret_diff_color
+                                 + conf_diff_color, df_regular[df_regular$treat_aggregate_signal==0,])
 
 
 # Table with overview
@@ -356,8 +356,8 @@ df_regular$belief_lag1_bin <- cut(df_regular$prior_aligned,
     labels = prior_bin_labels)
 
 bin_labels <- levels(df_regular$belief_lag1_bin)
-reg_prior_effects <- data.frame(bin = bin_labels, c_coef = NA, d_coef = NA,
-                                 c_se = NA, d_se = NA, n = NA)
+reg_prior_effects <- data.frame(bin = bin_labels, d_coef = NA, c_coef = NA,
+                                 d_se = NA, c_se = NA, n = NA)
 
 for (i in seq_along(bin_labels)) {
   bl <- bin_labels[i]
@@ -366,11 +366,11 @@ for (i in seq_along(bin_labels)) {
 
   # Try mixed-effects; fall back to OLS if convergence fails
   fit <- tryCatch(
-    lmer(obslnpost ~ signal_ratio + prior_ratio + (1 + signal_ratio + prior_ratio | id), df_sub),
+    lmer(obs_log_post_ratio ~ signal_ratio + prior_ratio + (1 + signal_ratio + prior_ratio | id), df_sub),
     error = function(e) NULL, warning = function(w) NULL
   )
   if (is.null(fit)) {
-    fit <- lm(obslnpost ~ signal_ratio + prior_ratio, df_sub)
+    fit <- lm(obs_log_post_ratio ~ signal_ratio + prior_ratio, df_sub)
     beta <- coef(fit)
     se <- sqrt(diag(vcov(fit)))
   } else {
@@ -378,37 +378,24 @@ for (i in seq_along(bin_labels)) {
     se <- sqrt(diag(vcov(fit)))
   }
 
-  reg_prior_effects$c_coef[i] <- beta["signal_ratio"]
-  reg_prior_effects$d_coef[i] <- beta["prior_ratio"]
-  reg_prior_effects$c_se[i] <- se["signal_ratio"]
-  reg_prior_effects$d_se[i] <- se["prior_ratio"]
+  reg_prior_effects$d_coef[i] <- beta["signal_ratio"]
+  reg_prior_effects$c_coef[i] <- beta["prior_ratio"]
+  reg_prior_effects$d_se[i] <- se["signal_ratio"]
+  reg_prior_effects$c_se[i] <- se["prior_ratio"]
 }
 
 reg_prior_effects$bin <- factor(reg_prior_effects$bin, levels = bin_labels)
 
 # Shared y-axis limits across both panels
-y_lo <- min(c(reg_prior_effects$c_coef - 1.96 * reg_prior_effects$c_se,
-              reg_prior_effects$d_coef - 1.96 * reg_prior_effects$d_se), na.rm = TRUE)
-y_hi <- max(c(reg_prior_effects$c_coef + 1.96 * reg_prior_effects$c_se,
-              reg_prior_effects$d_coef + 1.96 * reg_prior_effects$d_se), na.rm = TRUE)
+y_lo <- min(c(reg_prior_effects$d_coef - 1.96 * reg_prior_effects$d_se,
+              reg_prior_effects$c_coef - 1.96 * reg_prior_effects$c_se), na.rm = TRUE)
+y_hi <- max(c(reg_prior_effects$d_coef + 1.96 * reg_prior_effects$d_se,
+              reg_prior_effects$c_coef + 1.96 * reg_prior_effects$c_se), na.rm = TRUE)
 y_pad <- (y_hi - y_lo) * 0.1
 y_lim <- c(y_lo - y_pad, y_hi + y_pad)
 n_y <- y_lo - y_pad * 0.5  # position for n-labels
 
-# Plot inference (c) by prior bin
-fig_reg_c <- ggplot(reg_prior_effects, aes(x = bin, y = c_coef)) +
-  geom_bar(stat = "identity", width = 0.8, fill = "white", colour = "black") +
-  geom_errorbar(aes(ymin = c_coef - 1.96 * c_se, ymax = c_coef + 1.96 * c_se), width = 0.2) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  geom_text(aes(label = paste0("n=", n)), y = n_y, size = 2.5) +
-  scale_x_discrete(name = "Prior aligned with signal (t-1)") +
-  coord_cartesian(ylim = y_lim) +
-  ylab("Inference (c)") +
-  ggtitle("Signal Weight by Prior Belief") +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# Plot base-rate use (d) by prior bin
+# Plot inference (d) by prior bin — d = signal weight per Grether (1980)
 fig_reg_d <- ggplot(reg_prior_effects, aes(x = bin, y = d_coef)) +
   geom_bar(stat = "identity", width = 0.8, fill = "white", colour = "black") +
   geom_errorbar(aes(ymin = d_coef - 1.96 * d_se, ymax = d_coef + 1.96 * d_se), width = 0.2) +
@@ -416,13 +403,26 @@ fig_reg_d <- ggplot(reg_prior_effects, aes(x = bin, y = d_coef)) +
   geom_text(aes(label = paste0("n=", n)), y = n_y, size = 2.5) +
   scale_x_discrete(name = "Prior aligned with signal (t-1)") +
   coord_cartesian(ylim = y_lim) +
-  ylab("Base-Rate Use (d)") +
+  ylab("Inference (d)") +
+  ggtitle("Signal Weight by Prior Belief") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plot base-rate use (c) by prior bin — c = prior weight per Grether (1980)
+fig_reg_c <- ggplot(reg_prior_effects, aes(x = bin, y = c_coef)) +
+  geom_bar(stat = "identity", width = 0.8, fill = "white", colour = "black") +
+  geom_errorbar(aes(ymin = c_coef - 1.96 * c_se, ymax = c_coef + 1.96 * c_se), width = 0.2) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  geom_text(aes(label = paste0("n=", n)), y = n_y, size = 2.5) +
+  scale_x_discrete(name = "Prior aligned with signal (t-1)") +
+  coord_cartesian(ylim = y_lim) +
+  ylab("Base-Rate Use (c)") +
   ggtitle("Prior Weight by Prior Belief") +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 fig_reg_cd_prior <- annotate_figure(
-  ggarrange(fig_reg_c, fig_reg_d, ncol = 2, nrow = 1),
+  ggarrange(fig_reg_d, fig_reg_c, ncol = 2, nrow = 1),
   top = text_grob("Regular Signals", face = "bold", size = 14))
 ggsave(fig_path("regular", "fig_cd_by_prior"), plot = fig_reg_cd_prior, width = 10, height = 5.5, units = "in", dpi = set_dpi)
 
