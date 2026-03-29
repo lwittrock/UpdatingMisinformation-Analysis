@@ -29,8 +29,8 @@ cat(">> Section 1: Regular Signals\n")
 ######################################################
 # TABLE 1
 ######################################################
-if (.should_run("tab1")) {
-.tick("Table 1")
+if (.should_run("tab_reg_belief_vs_posterior")) {
+.tick("Table -- Belief vs Posterior")
 tryCatch({
 
 # Regression
@@ -57,8 +57,8 @@ write_stargazer(ols_belief_post_subj,
 ######################################################
 # FIGURE 12 AND TABLE 2
 ######################################################
-if (.should_run("fig12")) {
-.tick("Figure 12 & Table 2")
+if (.should_run("fig_reg_inference")) {
+.tick("Figure -- Inference & Updating Table")
 tryCatch({
 
 # Estimating Inference and Base Rate Use
@@ -112,8 +112,8 @@ ggsave(fig_path("regular", "fig_inference_baserate"), plot = fig_regular_updatin
 ######################################################
 # TABLE 2
 ######################################################
-if (.should_run("tab2")) {
-.tick("Table 2")
+if (.should_run("tab_reg_updating")) {
+.tick("Table -- Updating")
 tryCatch({
 
 # above
@@ -125,8 +125,8 @@ tryCatch({
 ######################################################
 # TABLE 3
 ######################################################
-if (.should_run("tab3")) {
-.tick("Table 3")
+if (.should_run("tab_reg_treatment")) {
+.tick("Table -- Treatment Effects")
 tryCatch({
 
 # Regression
@@ -155,8 +155,8 @@ write_stargazer(ols_regular_treat,
 ######################################################
 # FIGURE 13 - EXPANDED
 ######################################################
-if (.should_run("fig13")) {
-.tick("Figure 13 (expanded)")
+if (.should_run("fig_reg_overreport")) {
+.tick("Figure -- Over-Report Distribution")
 tryCatch({
 
 # Overview average and median
@@ -192,8 +192,8 @@ ggsave(fig_path("regular", "fig_overreport"), plot = fig_overreport_regular, wid
 ######################################################
 # FIGURE 17
 ######################################################
-if (.should_run("fig17")) {
-.tick("Figure 17")
+if (.should_run("fig_reg_time")) {
+.tick("Figure -- Time by Type")
 tryCatch({
 
 # Summarizing data by belief input type
@@ -219,8 +219,8 @@ ggsave(fig_path("regular", "fig_time_by_type"), plot = fig_time_belief_type, wid
 ######################################################
 # TABLE 14
 ######################################################
-if (.should_run("tab14")) {
-.tick("Table 14")
+if (.should_run("tab_reg_llr")) {
+.tick("Table -- Verification LLR")
 tryCatch({
 
 # Preparation
@@ -293,8 +293,8 @@ write_stargazer(me_reg_by_prev_ver, me_reg_by_prev_ret_conf, me_reg_by_same_othe
 ######################################################
 # TABLE 15
 ######################################################
-if (.should_run("tab15")) {
-.tick("Table 15")
+if (.should_run("tab_reg_belief_change")) {
+.tick("Table -- Verification Belief Change")
 tryCatch({
 
 # Regressions

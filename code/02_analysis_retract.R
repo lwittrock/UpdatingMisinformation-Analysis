@@ -30,8 +30,8 @@ cat(">> Section 2: Retractions\n")
 ######################################################
 # FIGURE 5
 ######################################################
-if (.should_run("fig5")) {
-.tick("Figure 5")
+if (.should_run("fig_ret_response_by_initial")) {
+.tick("Figure -- Response by Initial Reaction")
 tryCatch({
 
 # Summary per type - SE grouped by subject
@@ -95,8 +95,8 @@ ggsave(fig_path("retract", "fig_response_by_initial"), plot = fig_retract_diff_g
 ######################################################
 # FIGURE 6
 ######################################################
-if (.should_run("fig6")) {
-.tick("Figure 6")
+if (.should_run("fig_ret_vs_opposite_ball")) {
+.tick("Figure -- Retraction vs Opposite Ball")
 tryCatch({
 
 # Preparation
@@ -145,8 +145,8 @@ ggsave(fig_path("retract", "fig_vs_opposite_ball"), plot = fig_regular_diff_grou
 ######################################################
 # FIGURE 14 AND ADDITIONAL GRAPHS FOR PRESENTATION
 ######################################################
-if (.should_run("fig14")) {
-.tick("Figure 14 & Additional Graphs")
+if (.should_run("fig_ret_scatter")) {
+.tick("Figure -- Retraction Scatter")
 tryCatch({
 
 # Restricting data to make graph clearer - 55obs less.
@@ -186,8 +186,8 @@ ggsave(fig_path("retract", "fig_scatter"), plot = fig_retract_change_lm, width =
 ######################################################
 # FIGURE 15
 ######################################################
-if (.should_run("fig15")) {
-.tick("Figure 15")
+if (.should_run("fig_ret_individual")) {
+.tick("Figure -- Individual Beliefs")
 tryCatch({
 
 # Restricting data to make graph clearer - 43 obs less.
@@ -219,8 +219,8 @@ ggsave(fig_path("retract", "fig_individual_beliefs"), plot = fig_retract_diff_co
 ######################################################
 # TABLE 4
 ######################################################
-if (.should_run("tab4")) {
-.tick("Table 4")
+if (.should_run("tab_ret_main")) {
+.tick("Table -- Retraction Main")
 tryCatch({
 
 # Regression
@@ -248,8 +248,8 @@ write_stargazer(ols_ret_persistence,
 ######################################################
 # TABLE 5
 ######################################################
-if (.should_run("tab5")) {
-.tick("Table 5")
+if (.should_run("tab_ret_compressed_hist")) {
+.tick("Table -- Compressed History")
 tryCatch({
 
 # variable indicating retraction
@@ -308,8 +308,8 @@ write_stargazer(ols_ret_comp_hist, ols_ret_comp_hist_round,
 ######################################################
 # TABLE 6 — Signal Use and Base-Rate Use (Objective Signals)
 ######################################################
-if (.should_run("tab6")) {
-.tick("Table 6")
+if (.should_run("tab_ret_obj_cd")) {
+.tick("Table -- Objective c & d")
 tryCatch({
 
 # Combined retraction + confirmation data
@@ -345,8 +345,8 @@ write_stargazer(ols_retract_obj, ols_confirm_obj, ols_retcon_obj,
 ######################################################
 # TABLE 7
 ######################################################
-if (.should_run("tab7")) {
-.tick("Table 7")
+if (.should_run("tab_ret_types")) {
+.tick("Table -- Retraction Types")
 tryCatch({
 
 # Preparation 1
@@ -410,8 +410,8 @@ write_stargazer(ols_ret_by_avg, ols_ret_by_cd, ols_ret_by_type, ols_ret_by_subje
 ######################################################
 # TABLE 8
 ######################################################
-if (.should_run("tab8")) {
-.tick("Table 8")
+if (.should_run("tab_ret_robustness")) {
+.tick("Table -- Retraction Robustness")
 tryCatch({
 
 # Regressions
@@ -442,8 +442,8 @@ write_stargazer(ols_ret_lag2, ols_ret_treat,
 ######################################################
 # TABLE 9
 ######################################################
-if (.should_run("tab9")) {
-.tick("Table 9")
+if (.should_run("tab_ret_induced_prior")) {
+.tick("Table -- Induced Prior")
 tryCatch({
 
 # Regression
@@ -468,8 +468,8 @@ write_stargazer(ols_ret_induced_prior,
 ######################################################
 # TABLE 10
 ######################################################
-if (.should_run("tab10")) {
-.tick("Table 10")
+if (.should_run("tab_ret_vs_ball")) {
+.tick("Table -- Retraction vs Ball")
 tryCatch({
 
 # Preparation
@@ -505,8 +505,8 @@ write_stargazer(ols_ret_vs_opposite,
 ######################################################
 # FIGURE 9
 ######################################################
-if (.should_run("fig9")) {
-.tick("Figure 9")
+if (.should_run("fig_ret_vs_uninformative")) {
+.tick("Figure -- Retraction vs Uninformative")
 tryCatch({
 
 # Summary per type - SE grouped by subject
@@ -552,8 +552,8 @@ ggsave(fig_path("retract", "fig_vs_uninformative"), plot = fig_retract_uninf, wi
 ######################################################
 # FIGURE 10
 ######################################################
-if (.should_run("fig10")) {
-.tick("Figure 10")
+if (.should_run("fig_ret_variance_vs_uninf")) {
+.tick("Figure -- Variance: Retraction vs Uninformative")
 tryCatch({
 
 # 1 retraction / uninformative signal
@@ -694,8 +694,8 @@ ggsave(fig_path("retract", "fig_variance_vs_uninf"), plot = fig_variance_retract
 ######################################################
 # TABLE 12
 ######################################################
-if (.should_run("tab12")) {
-.tick("Table 12")
+if (.should_run("tab_ret_vs_uninformative")) {
+.tick("Table -- Retraction vs Uninformative")
 tryCatch({
 
 # Preparation: create variable with all combinations of red and blue uninformative signals.

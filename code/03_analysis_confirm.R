@@ -31,8 +31,8 @@ cat(">> Section 3: Confirmations\n")
 # FIGURE 7
 # * REVISED IN REVISION: bars now show over_report instead of belief_change_adj
 ######################################################
-if (.should_run("fig7")) {
-.tick("Figure 7")
+if (.should_run("fig_conf_all_reactions")) {
+.tick("Figure -- All Confirmation Reactions")
 tryCatch({
 
 df_conf_nonceiling <- df_confirm[df_confirm$belief_change_rational_lag1!=0,]
@@ -87,8 +87,8 @@ ggsave(fig_path("confirm", "fig_belief_change"), plot = fig_confirm_change, widt
 ######################################################
 # FIGURE 8
 ######################################################
-if (.should_run("fig8")) {
-.tick("Figure 8")
+if (.should_run("fig_conf_belief_change")) {
+.tick("Figure -- Confirmation Belief Change")
 tryCatch({
 
 # Summary per type
@@ -155,8 +155,8 @@ ggsave(fig_path("confirm", "fig_by_initial_reaction"), plot = fig_confirm_diff_r
 # FIGURE 11
 # * REVISED IN REVISION: reduced to 2 bars, shows over_report
 ######################################################
-if (.should_run("fig11")) {
-.tick("Figure 11")
+if (.should_run("fig_conf_by_initial")) {
+.tick("Figure -- Confirmation by Initial Reaction")
 tryCatch({
 
 # Summary per type - SE grouped by subject
@@ -205,8 +205,8 @@ ggsave(fig_path("confirm", "fig_vs_informative"), plot = fig_confirm_inf_change,
 ######################################################
 # FIGURE 16
 ######################################################
-if (.should_run("fig16")) {
-.tick("Figure 16")
+if (.should_run("fig_conf_vs_informative")) {
+.tick("Figure -- Confirmation vs Informative")
 tryCatch({
 
 # Influence of Confirmations - complete
@@ -240,7 +240,7 @@ ggsave(fig_path("confirm", "fig_all_reactions"), plot = fig_confirm_diff, width 
 ######################################################
 # TABLE -- Confirmation Treatment Heterogeneity (new for revision)
 ######################################################
-if (.should_run("tab11b")) {
+if (.should_run("tab_conf_types")) {
 .tick("Table -- Confirmation Treatment Heterogeneity")
 tryCatch({
 
@@ -269,8 +269,8 @@ write_stargazer(ols_confirm_treat,
 ######################################################
 # TABLE 13
 ######################################################
-if (.should_run("tab13")) {
-.tick("Table 13")
+if (.should_run("tab_conf_vs_informative")) {
+.tick("Table -- Confirmation vs Informative")
 tryCatch({
 
 # create variable with all combinations of red and blue informative signals.
