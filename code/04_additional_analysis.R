@@ -10,6 +10,7 @@
 #  Group D (6–8):  c and d by individual round for each signal type
 #  Group E (9–11): c and d by prior block for each signal type
 #  Group F (12–14): c and d by temporal period block (Early/Middle/Late)
+#  Group G (15):    c and d jointly by period block × prior group (2D heatmap)
 #
 # Outputs: output/additional/tables/*.tex
 #          output/additional/figures/*.jpg  (ggplot)
@@ -106,9 +107,12 @@ write_tikz_bias <- function(tbl, out_path, ylabel,
   tbl <- tbl[order(factor(tbl$prior_bin, levels = prior_bin_labels)), ]
   bin_mids <- seq(0.05, 0.95, 0.1)
 
-  # y-axis range: cover mean ± SD, always include zero
-  y_lo <- min(c(0, tbl$Mean - tbl$SD), na.rm = TRUE)
-  y_hi <- max(c(0, tbl$Mean + tbl$SD), na.rm = TRUE)
+  # 95% CI half-widths: 1.96 * SE, consistent with other figures (e.g. fig_overreport)
+  ci <- 1.96 * tbl$SD / sqrt(tbl$N)
+
+  # y-axis range: cover mean ± 95% CI, always include zero
+  y_lo <- min(c(0, tbl$Mean - ci), na.rm = TRUE)
+  y_hi <- max(c(0, tbl$Mean + ci), na.rm = TRUE)
   pad  <- max(abs(c(y_lo, y_hi))) * 0.2
   y_lo <- floor((y_lo - pad) * 10) / 10
   y_hi <- ceiling((y_hi + pad) * 10) / 10
@@ -127,9 +131,9 @@ write_tikz_bias <- function(tbl, out_path, ylabel,
   )
 
   for (i in 1:10) {
-    m <- tbl$Mean[i]
-    s <- tbl$SD[i]
-    if (is.na(m) || is.na(s)) next
+    m  <- tbl$Mean[i]
+    hw <- ci[i]
+    if (is.na(m) || is.na(hw)) next
     x <- bin_mids[i]
     lines <- c(lines,
       sprintf("\\filldraw[opaque,white!80!black] (%.2f,0) rectangle (%.2f,%.4f);",
@@ -137,7 +141,7 @@ write_tikz_bias <- function(tbl, out_path, ylabel,
       sprintf("\\draw[line width=0.6] (%.2f,0) rectangle (%.2f,%.4f);",
               x - 0.02, x + 0.02, m),
       sprintf("\\draw[line width=0.6,|-|] (%.2f,%.4f) -- (%.2f,%.4f);",
-              x, m - s, x, m + s)
+              x, m - hw, x, m + hw)
     )
   }
 
@@ -149,12 +153,40 @@ write_tikz_bias <- function(tbl, out_path, ylabel,
             pos_mid, positive_label),
     sprintf("\\draw (0,%.2f) node[above,rotate=90] {\\small{%s}};",
             neg_mid, neg_label),
-    "% ADD THEORY CURVE BELOW IF NEEDED:",
-    "% \\draw[red,line width=1.2,domain=0.01:0.99] plot(\\x,{...});",
+    "% ADD THEORY CURVE BELOW",
     "\\end{tikzpicture}"
   )
   writeLines(lines, out_path)
   invisible(tbl)
+}
+
+
+######################################################
+# HELPER: JPG bias-bar figure (ggplot2 equivalent of TikZ)
+#
+# Produces a JPG for visual verification alongside the TikZ snippet.
+# Error bars are 95% CI (1.96 * SE), consistent with write_tikz_bias.
+######################################################
+write_jpg_bias <- function(tbl, out_path, ylabel_text,
+                            positive_label = "Overreacts",
+                            title = NULL) {
+  tbl <- tbl[order(factor(tbl$prior_bin, levels = prior_bin_labels)), ]
+  tbl$prior_bin <- factor(tbl$prior_bin, levels = prior_bin_labels)
+  ci <- 1.96 * tbl$SD / sqrt(tbl$N)
+  tbl$ci_lo <- tbl$Mean - ci
+  tbl$ci_hi <- tbl$Mean + ci
+
+  p <- ggplot(tbl, aes(x = prior_bin, y = Mean)) +
+    geom_col(fill = "grey80", color = "black", linewidth = 0.4) +
+    geom_errorbar(aes(ymin = ci_lo, ymax = ci_hi), width = 0.4, linewidth = 0.5) +
+    geom_hline(yintercept = 0, linewidth = 0.6) +
+    labs(x = expression(p[t-1](R)), y = ylabel_text, title = title) +
+    theme_paper() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  ggsave(out_path, plot = p, width = fig_width, height = fig_height,
+         units = "in", dpi = set_dpi)
+  invisible(p)
 }
 
 
@@ -180,6 +212,9 @@ write_mean_sd_tex(reg_bias, add_tab("tab_reg_bias_by_prior"),
 write_tikz_bias(reg_bias, add_tikz("fig_reg_bias_by_prior"),
   ylabel        = "\\small{Over-report}",
   positive_label = "Overreacts")
+write_jpg_bias(reg_bias, add_fig("fig_reg_bias_by_prior"),
+  ylabel_text    = "Over-report",
+  positive_label = "Overreacts")
 
 # Item 2 — Retractions
 # over_report_ret > 0: under-reacts (belief still biased toward initial signal)
@@ -196,6 +231,9 @@ write_mean_sd_tex(ret_bias, add_tab("tab_ret_bias_by_prior"),
 write_tikz_bias(ret_bias, add_tikz("fig_ret_bias_by_prior"),
   ylabel        = "\\small{$b_{t+1}(R|r,\\xmark)$}",
   positive_label = "Underreacts")  # matches user's TikZ: positive = underreact
+write_jpg_bias(ret_bias, add_fig("fig_ret_bias_by_prior"),
+  ylabel_text    = "Bias toward initial signal",
+  positive_label = "Underreacts")
 
 # Item 3 — Confirmations
 # over_report > 0: over-reacts to confirmation
@@ -212,8 +250,120 @@ write_mean_sd_tex(conf_bias, add_tab("tab_conf_bias_by_prior"),
 write_tikz_bias(conf_bias, add_tikz("fig_conf_bias_by_prior"),
   ylabel        = "\\small{Over-report}",
   positive_label = "Overreacts")
+write_jpg_bias(conf_bias, add_fig("fig_conf_bias_by_prior"),
+  ylabel_text    = "Over-report",
+  positive_label = "Overreacts")
 
 cat("   Items 1–3 done\n")
+
+
+######################################################
+# GROUP A2: MEAN BIAS BY PRIOR BIN × PERIOD BLOCK
+# Retraction and confirmation only (regular has no verification events).
+# Period blocks mirror Group F: Early (3–5), Middle (6–8), Late (9–11).
+######################################################
+cat(">> Group A2: mean bias by prior bin x period block...\n")
+
+assign_period_block_retconf_a2 <- function(r) {
+  ifelse(r %in% 3:5,  "Early",
+  ifelse(r %in% 6:8,  "Middle",
+  ifelse(r %in% 9:11, "Late", NA_character_)))
+}
+block_order_a2 <- c("Early", "Middle", "Late")
+
+for (pb in block_order_a2) {
+  # Retractions
+  ret_pb <- df_retract %>%
+    filter(assign_period_block_retconf_a2(round) == pb) %>%
+    group_by(prior_bin = prior_aligned_bin) %>%
+    summarise(Mean = mean(over_report_ret, na.rm = TRUE),
+              SD   = sd(over_report_ret,   na.rm = TRUE),
+              N    = n(), .groups = "drop")
+
+  pb_slug <- tolower(pb)
+  write_tikz_bias(ret_pb, add_tikz(paste0("fig_ret_bias_by_prior_", pb_slug)),
+    ylabel        = "\\small{$b_{t+1}(R|r,\\xmark)$}",
+    positive_label = "Underreacts")
+  write_jpg_bias(ret_pb, add_fig(paste0("fig_ret_bias_by_prior_", pb_slug)),
+    ylabel_text    = "Bias toward initial signal",
+    positive_label = "Underreacts",
+    title          = paste("Retractions —", pb))
+
+  # Confirmations
+  conf_pb <- df_confirm %>%
+    filter(assign_period_block_retconf_a2(round) == pb) %>%
+    group_by(prior_bin = belief_lag2_bin) %>%
+    summarise(Mean = mean(over_report, na.rm = TRUE),
+              SD   = sd(over_report,   na.rm = TRUE),
+              N    = n(), .groups = "drop")
+
+  write_tikz_bias(conf_pb, add_tikz(paste0("fig_conf_bias_by_prior_", pb_slug)),
+    ylabel        = "\\small{Over-report}",
+    positive_label = "Overreacts")
+  write_jpg_bias(conf_pb, add_fig(paste0("fig_conf_bias_by_prior_", pb_slug)),
+    ylabel_text    = "Over-report",
+    positive_label = "Overreacts",
+    title          = paste("Confirmations —", pb))
+}
+
+cat("   Group A2 done\n")
+
+
+######################################################
+# GROUP A3: MEAN BIAS BY PRIOR BIN × N PREVIOUS VERIFICATIONS
+# Retraction and confirmation only.
+# n_prev = number of same-type verification rounds seen by this subject
+# before the current one (0, 1, or 2; 3 is rare and excluded).
+######################################################
+cat(">> Group A3: mean bias by prior bin x n previous verifications...\n")
+
+df_retract_nprev <- df_retract %>%
+  arrange(id, round) %>%
+  group_by(id) %>%
+  mutate(n_prev_ret = row_number() - 1L) %>%
+  ungroup()
+
+df_confirm_nprev <- df_confirm %>%
+  arrange(id, round) %>%
+  group_by(id) %>%
+  mutate(n_prev_conf = row_number() - 1L) %>%
+  ungroup()
+
+for (np in 0:2) {
+  # Retractions
+  ret_np <- df_retract_nprev %>%
+    filter(n_prev_ret == np) %>%
+    group_by(prior_bin = prior_aligned_bin) %>%
+    summarise(Mean = mean(over_report_ret, na.rm = TRUE),
+              SD   = sd(over_report_ret,   na.rm = TRUE),
+              N    = n(), .groups = "drop")
+
+  write_tikz_bias(ret_np, add_tikz(paste0("fig_ret_bias_by_prior_prev", np)),
+    ylabel        = "\\small{$b_{t+1}(R|r,\\xmark)$}",
+    positive_label = "Underreacts")
+  write_jpg_bias(ret_np, add_fig(paste0("fig_ret_bias_by_prior_prev", np)),
+    ylabel_text    = "Bias toward initial signal",
+    positive_label = "Underreacts",
+    title          = paste0("Retractions — ", np, " previous ret. seen"))
+
+  # Confirmations
+  conf_np <- df_confirm_nprev %>%
+    filter(n_prev_conf == np) %>%
+    group_by(prior_bin = belief_lag2_bin) %>%
+    summarise(Mean = mean(over_report, na.rm = TRUE),
+              SD   = sd(over_report,   na.rm = TRUE),
+              N    = n(), .groups = "drop")
+
+  write_tikz_bias(conf_np, add_tikz(paste0("fig_conf_bias_by_prior_prev", np)),
+    ylabel        = "\\small{Over-report}",
+    positive_label = "Overreacts")
+  write_jpg_bias(conf_np, add_fig(paste0("fig_conf_bias_by_prior_prev", np)),
+    ylabel_text    = "Over-report",
+    positive_label = "Overreacts",
+    title          = paste0("Confirmations — ", np, " previous conf. seen"))
+}
+
+cat("   Group A3 done\n")
 
 
 ######################################################
@@ -255,6 +405,9 @@ write_mean_sd_tex(opp_bias, add_tab("tab_opp_bias_by_prior"),
 
 write_tikz_bias(opp_bias, add_tikz("fig_opp_bias_by_prior"),
   ylabel        = "\\small{$b_{t+1}(R|r,\\text{opp})$}",
+  positive_label = "Underreacts")
+write_jpg_bias(opp_bias, add_fig("fig_opp_bias_by_prior"),
+  ylabel_text    = "Bias toward initial signal",
   positive_label = "Underreacts")
 
 cat("   Item 4 done\n")
@@ -699,6 +852,87 @@ cat("   Group F done\n")
 
 
 ######################################################
+# GROUP G: c AND d BY PERIOD BLOCK × PRIOR GROUP (2D)
+# 5 prior groups (signal-aligned prior: 0-20, 21-40, 41-60, 61-80, 81-100%)
+# × 3 period blocks = 15 cells per signal type (45 regressions total)
+# Disentangles period and prior effects on c and d
+######################################################
+cat(">> Group G: c and d by period block x prior group (2D)...\n")
+
+prior5_breaks <- c(0, 0.20, 0.40, 0.60, 0.80, 1.00)
+prior5_labels <- c("0-20", "21-40", "41-60", "61-80", "81-100")
+
+# prior_aligned already on df_reg_pb (from top of file), df_ret_pb and
+# df_conf_pb (from derived_variables.R); all on [0,1] signal-aligned scale
+df_reg_pb$prior_group5  <- factor(
+  cut(df_reg_pb$prior_aligned,  breaks = prior5_breaks,
+      include.lowest = TRUE, labels = prior5_labels), levels = prior5_labels)
+df_ret_pb$prior_group5  <- factor(
+  cut(df_ret_pb$prior_aligned,  breaks = prior5_breaks,
+      include.lowest = TRUE, labels = prior5_labels), levels = prior5_labels)
+df_conf_pb$prior_group5 <- factor(
+  cut(df_conf_pb$prior_aligned, breaks = prior5_breaks,
+      include.lowest = TRUE, labels = prior5_labels), levels = prior5_labels)
+
+# Combined cell key for run_cd_by (parses back after)
+df_reg_pb$cell_2d  <- paste(df_reg_pb$period_block,  df_reg_pb$prior_group5,  sep = "||")
+df_ret_pb$cell_2d  <- paste(df_ret_pb$period_block,  df_ret_pb$prior_group5,  sep = "||")
+df_conf_pb$cell_2d <- paste(df_conf_pb$period_block, df_conf_pb$prior_group5, sep = "||")
+
+cd_reg_2d  <- run_cd_by(df_reg_pb,  "cell_2d", signal_var = "signal_ratio")
+cd_ret_2d  <- run_cd_by(df_ret_pb,  "cell_2d", signal_var = "signal_ratio_obj")
+cd_conf_2d <- run_cd_by(df_conf_pb, "cell_2d", signal_var = "signal_ratio_obj")
+
+# Parse cell key back into period_block and prior_group5
+parse_cell2d <- function(df) {
+  parts <- strsplit(df$cell_2d, "\\|\\|")
+  df$period_block <- factor(sapply(parts, `[`, 1), levels = block_order)
+  df$prior_group5 <- factor(sapply(parts, `[`, 2), levels = prior5_labels)
+  df
+}
+cd_reg_2d  <- parse_cell2d(cd_reg_2d)
+cd_ret_2d  <- parse_cell2d(cd_ret_2d)
+cd_conf_2d <- parse_cell2d(cd_conf_2d)
+
+cd_reg_2d$signal_type  <- "Regular"
+cd_ret_2d$signal_type  <- "Retraction"
+cd_conf_2d$signal_type <- "Confirmation"
+
+cd_2d <- rbind(cd_reg_2d, cd_ret_2d, cd_conf_2d)
+cd_2d$signal_type <- factor(cd_2d$signal_type,
+                             levels = c("Regular", "Retraction", "Confirmation"))
+cd_2d$param_label <- ifelse(cd_2d$param == "c",
+                             "Base-Rate Use (c)", "Inference (d)")
+
+# Heatmap: period on x, prior group on y, fill = estimate
+# Diverging palette centred at 1 (Bayesian benchmark)
+# 2 × 3 facet grid: param (c/d) × signal type
+fig_cd_2d <- ggplot(cd_2d,
+    aes(x = period_block, y = prior_group5, fill = estimate)) +
+  geom_tile(color = "white", linewidth = 0.6) +
+  geom_text(aes(label = ifelse(!is.na(estimate),
+                               sprintf("%.2f", estimate), "---")),
+            size = 2.8) +
+  scale_fill_gradient2(low  = "#4575b4", mid  = "white", high = "#d73027",
+                       midpoint = 1, na.value = "grey80",
+                       name = "Estimate\n(1 = Bayesian)") +
+  facet_grid(param_label ~ signal_type) +
+  xlab("Period Block") +
+  ylab("Signal-aligned prior (%)") +
+  theme_classic() +
+  theme(legend.position  = "right",
+        strip.text       = element_text(size = 9),
+        axis.text.x      = element_text(size = 8),
+        axis.text.y      = element_text(size = 8),
+        panel.spacing    = unit(0.4, "lines"))
+
+ggsave(add_fig("fig_cd_2d"),
+       fig_cd_2d, width = 10, height = 6, units = "in", dpi = set_dpi)
+
+cat("   Group G done\n")
+
+
+######################################################
 # MARKDOWN OVERVIEW (for VS Code preview: Ctrl+Shift+V)
 ######################################################
 cat(">> Writing markdown overview...\n")
@@ -728,6 +962,13 @@ cat(paste0("_Regular: Early=2-4, Middle=5-7, Late=8-10. ",
            "Retractions/Confirmations: Early=3-5, Middle=6-8, Late=9-11._\n\n"),
     file = md_path, append = TRUE)
 md_append_cd(cd_by_period, "period_block", block_order, "c and d by Period Block")
+
+# c/d 2D heatmap (Group G) — no tabular md helper; note figure only
+cat("## Group G — c and d by Period Block × Prior Group (2D)\n\n",
+    file = md_path, append = TRUE)
+cat(paste0("_5 prior groups (signal-aligned): 0-20, 21-40, 41-60, 61-80, 81-100%. ",
+           "Period blocks same as Group F. See fig_cd_2d.jpg._\n\n"),
+    file = md_path, append = TRUE)
 
 cat("   Markdown written to output/additional/overview.md\n")
 cat("   Open in VS Code and press Ctrl+Shift+V to preview\n")

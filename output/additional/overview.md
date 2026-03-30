@@ -1,5 +1,5 @@
 # Additional Analysis — Overview
-_Generated: 2026-03-30 18:23:24.506549_
+_Generated: 2026-03-30 20:33:13.16985_
 
 Open this file in VS Code and press **Ctrl+Shift+V** to preview.
 
@@ -152,4 +152,8 @@ _Regular: Early=2-4, Middle=5-7, Late=8-10. Retractions/Confirmations: Early=3-5
 | Early | 1.544 (0.079) | 1.136 (0.248) | 0.744 (0.184) |
 | Middle | 1.422 (0.095) | 0.639 (0.213) | 1.215 (0.159) |
 | Late | 1.541 (0.120) | 0.618 (0.292) | 2.474 (0.298) |
+
+## Group G — c and d by Period Block × Prior Group (2D)
+
+_5 prior groups (signal-aligned): 0-20, 21-40, 41-60, 61-80, 81-100%. Period blocks same as Group F. See fig_cd_2d.jpg._
 
