@@ -16,19 +16,7 @@
 ######################################################
 # SETUP (auto-loads utilities if run standalone)
 ######################################################
-if (!exists(".utils_loaded")) {
-  inpath      <- "data/processed"
-  output_type <- "latex"
-  set_dpi     <- 400
-  source("code/utils/packages.R")
-  source("code/utils/constants.R")
-  source("code/utils/helpers.R")
-  source("code/utils/plot_theme.R")
-  source("code/utils/figure_helpers.R")
-  source("code/utils/run_control.R")
-  .utils_loaded <- TRUE
-  source("code/utils/derived_variables.R")
-}
+if (!exists(".utils_loaded")) source("code/utils/bootstrap.R")
 
 .tick("Section 3: Treatments")
 
@@ -75,21 +63,16 @@ for (tr in 1:3) {
               N    = n(), .groups = "drop")
 }
 
-write_tikz_bias_grouped(ret_treats, unname(treat_colors),
-  tikz_path("treatments", "figure_B9_retraction_bias_by_treatment"),
-  ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-write_jpg_bias_grouped(ret_treats, unname(treat_colors),
-  fig_path("treatments", "figure_B9_retraction_bias_by_treatment"),
-  ylabel_text = LBL_JPG_RET, positive_label = POS_RET,
-  title = "Retractions — by treatment")
-
-write_tikz_bias_grouped(conf_treats, unname(treat_colors),
-  tikz_path("treatments", "figure_B9_confirmation_bias_by_treatment"),
-  ylabel = LBL_TIKZ_REG, positive_label = POS_REG)
-write_jpg_bias_grouped(conf_treats, unname(treat_colors),
-  fig_path("treatments", "figure_B9_confirmation_bias_by_treatment"),
-  ylabel_text = LBL_JPG_REG, positive_label = POS_REG,
-  title = "Confirmations — by treatment")
+b9_panels <- list(
+  list(body = tikz_bias_grouped_body(ret_treats, unname(treat_colors),
+                                     LBL_TIKZ_RET, POS_RET),
+       caption = "Retractions"),
+  list(body = tikz_bias_grouped_body(conf_treats, unname(treat_colors),
+                                     LBL_TIKZ_REG, POS_REG),
+       caption = "Confirmations")
+)
+write_tikz_figure(b9_panels,
+  tikz_path("treatments", "figure_B9_bias_by_treatment"), ncol = 1)
 
 }, error = .fail)
 }
@@ -144,10 +127,6 @@ figB10_groups <- list(`Ex ante` = uninf_bias, `Ex post` = ret_bias)
 write_tikz_bias_grouped(figB10_groups, c("blue", "black"),
   tikz_path("treatments", "figure_B10_retraction_exante_vs_expost"),
   ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-write_jpg_bias_grouped(figB10_groups, c("blue", "black"),
-  fig_path("treatments", "figure_B10_retraction_exante_vs_expost"),
-  ylabel_text = LBL_JPG_RET, positive_label = POS_RET,
-  title = "Retraction bias — ex ante vs ex post")
 
 }, error = .fail)
 }
@@ -164,10 +143,6 @@ figB11_groups <- list(`Ex ante` = inf_bias, `Ex post` = conf_bias)
 write_tikz_bias_grouped(figB11_groups, c("blue", "black"),
   tikz_path("treatments", "figure_B11_confirmation_exante_vs_expost"),
   ylabel = LBL_TIKZ_REG, positive_label = POS_REG)
-write_jpg_bias_grouped(figB11_groups, c("blue", "black"),
-  fig_path("treatments", "figure_B11_confirmation_exante_vs_expost"),
-  ylabel_text = LBL_JPG_REG, positive_label = POS_REG,
-  title = "Confirmation bias — ex ante vs ex post")
 
 }, error = .fail)
 }

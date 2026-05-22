@@ -20,19 +20,7 @@
 ######################################################
 # SETUP (auto-loads utilities if run standalone)
 ######################################################
-if (!exists(".utils_loaded")) {
-  inpath      <- "data/processed"
-  output_type <- "latex"
-  set_dpi     <- 400
-  source("code/utils/packages.R")
-  source("code/utils/constants.R")
-  source("code/utils/helpers.R")
-  source("code/utils/plot_theme.R")
-  source("code/utils/figure_helpers.R")
-  source("code/utils/run_control.R")
-  .utils_loaded <- TRUE
-  source("code/utils/derived_variables.R")
-}
+if (!exists(".utils_loaded")) source("code/utils/bootstrap.R")
 
 .tick("Section 2: Dynamics")
 
@@ -133,27 +121,27 @@ write_cd_tex(cd_by_period, "period_block", block_order,
 #   r = previous retractions, c = previous confirmations
 ######################################################
 vertype_cases <- list(
-  list(label = "r0c0", panel = "a", profile = "$(H_{0,0})$",
+  list(profile = "$(H_{0,0})$", caption = "$(H_{0,0})$: 0 retractions / 0 confirmations",
        reg_filter  = quote(cum_ret == 0 & cum_conf == 0),
        ret_filter  = quote(n_prev_ret == 0 & conf_total == 0),
        conf_filter = quote(ret_total == 0 & n_prev_conf == 0)),
-  list(label = "r1c0", panel = "b", profile = "$(H_{1,0})$",
+  list(profile = "$(H_{1,0})$", caption = "$(H_{1,0})$: 1 retraction / 0 confirmations",
        reg_filter  = quote(cum_ret == 1 & cum_conf == 0),
        ret_filter  = quote(n_prev_ret == 1 & conf_total == 0),
        conf_filter = quote(ret_total == 1 & n_prev_conf == 0)),
-  list(label = "r0c1", panel = "c", profile = "$(H_{0,1})$",
+  list(profile = "$(H_{0,1})$", caption = "$(H_{0,1})$: 0 retractions / 1 confirmation",
        reg_filter  = quote(cum_ret == 0 & cum_conf == 1),
        ret_filter  = quote(n_prev_ret == 0 & conf_total == 1),
        conf_filter = quote(ret_total == 0 & n_prev_conf == 1)),
-  list(label = "r2c0", panel = "d", profile = "$(H_{2,0})$",
+  list(profile = "$(H_{2,0})$", caption = "$(H_{2,0})$: 2 retractions / 0 confirmations",
        reg_filter  = quote(cum_ret == 2 & cum_conf == 0),
        ret_filter  = quote(n_prev_ret == 2 & conf_total == 0),
        conf_filter = quote(ret_total == 2 & n_prev_conf == 0)),
-  list(label = "r0c2", panel = "e", profile = "$(H_{0,2})$",
+  list(profile = "$(H_{0,2})$", caption = "$(H_{0,2})$: 0 retractions / 2 confirmations",
        reg_filter  = quote(cum_ret == 0 & cum_conf == 2),
        ret_filter  = quote(n_prev_ret == 0 & conf_total == 2),
        conf_filter = quote(ret_total == 0 & n_prev_conf == 2)),
-  list(label = "r1c1", panel = "f", profile = "$(H_{1,1})$",
+  list(profile = "$(H_{1,1})$", caption = "$(H_{1,1})$: 1 retraction / 1 confirmation",
        reg_filter  = quote(cum_ret == 1 & cum_conf == 1),
        ret_filter  = quote(n_prev_ret == 1 & conf_total == 1),
        conf_filter = quote(ret_total == 1 & n_prev_conf == 1))
@@ -248,21 +236,16 @@ conf_blocks <- lapply(block_order_a2, function(pb) {
 })
 names(conf_blocks) <- block_order_a2
 
-write_tikz_bias_grouped(ret_blocks, unname(block_colors),
-  tikz_path("dynamics", "figure_B4_retraction_bias_by_period"),
-  ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-write_jpg_bias_grouped(ret_blocks, unname(block_colors),
-  fig_path("dynamics", "figure_B4_retraction_bias_by_period"),
-  ylabel_text = LBL_JPG_RET, positive_label = POS_RET,
-  title = "Retractions — by period block")
-
-write_tikz_bias_grouped(conf_blocks, unname(block_colors),
-  tikz_path("dynamics", "figure_B4_confirmation_bias_by_period"),
-  ylabel = LBL_TIKZ_REG, positive_label = POS_REG)
-write_jpg_bias_grouped(conf_blocks, unname(block_colors),
-  fig_path("dynamics", "figure_B4_confirmation_bias_by_period"),
-  ylabel_text = LBL_JPG_REG, positive_label = POS_REG,
-  title = "Confirmations — by period block")
+b4_panels <- list(
+  list(body = tikz_bias_grouped_body(ret_blocks, unname(block_colors),
+                                     LBL_TIKZ_RET, POS_RET),
+       caption = "Retractions"),
+  list(body = tikz_bias_grouped_body(conf_blocks, unname(block_colors),
+                                     LBL_TIKZ_REG, POS_REG),
+       caption = "Confirmations")
+)
+write_tikz_figure(b4_panels,
+  tikz_path("dynamics", "figure_B4_bias_by_period"), ncol = 1)
 
 }, error = .fail)
 }
@@ -270,11 +253,15 @@ write_jpg_bias_grouped(conf_blocks, unname(block_colors),
 
 ######################################################
 # FIGURES B6 / B7 / B8 — Observed bias by verification profile
-# Six single-series panels per signal type (one per profile).
+# One combined figure per signal type, six panels (one per profile).
 ######################################################
 if (.should_run("fig_B6") || .should_run("fig_B7") || .should_run("fig_B8")) {
 .tick("Figures B6-B8 -- bias by verification profile")
 tryCatch({
+
+b6_panels <- list()
+b7_panels <- list()
+b8_panels <- list()
 
 for (vc in vertype_cases) {
   df_reg_i  <- df_regular[with(df_regular,             eval(vc$reg_filter)),  ]
@@ -297,31 +284,23 @@ for (vc in vertype_cases) {
               SD   = sd(over_report,       na.rm = TRUE),
               N    = n(), .groups = "drop")
 
-  if (.should_run("fig_B6")) {
-    nm <- paste0("figure_B6", vc$panel, "_regular_profile_", vc$label)
-    write_tikz_bias(reg_i, tikz_path("dynamics", nm),
-      ylabel = LBL_TIKZ_REG, positive_label = POS_REG)
-    write_jpg_bias(reg_i, fig_path("dynamics", nm),
-      ylabel_text = LBL_JPG_REG, positive_label = POS_REG,
-      title = paste0("Regular signals — profile ", vc$label))
-  }
-  if (.should_run("fig_B7")) {
-    nm <- paste0("figure_B7", vc$panel, "_retraction_profile_", vc$label)
-    write_tikz_bias(ret_i, tikz_path("dynamics", nm),
-      ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-    write_jpg_bias(ret_i, fig_path("dynamics", nm),
-      ylabel_text = LBL_JPG_RET, positive_label = POS_RET,
-      title = paste0("Retractions — profile ", vc$label))
-  }
-  if (.should_run("fig_B8")) {
-    nm <- paste0("figure_B8", vc$panel, "_confirmation_profile_", vc$label)
-    write_tikz_bias(conf_i, tikz_path("dynamics", nm),
-      ylabel = LBL_TIKZ_REG, positive_label = POS_REG)
-    write_jpg_bias(conf_i, fig_path("dynamics", nm),
-      ylabel_text = LBL_JPG_REG, positive_label = POS_REG,
-      title = paste0("Confirmations — profile ", vc$label))
-  }
+  b6_panels <- c(b6_panels, list(list(
+    body = tikz_bias_body(reg_i, LBL_TIKZ_REG, POS_REG), caption = vc$caption)))
+  b7_panels <- c(b7_panels, list(list(
+    body = tikz_bias_body(ret_i, LBL_TIKZ_RET, POS_RET), caption = vc$caption)))
+  b8_panels <- c(b8_panels, list(list(
+    body = tikz_bias_body(conf_i, LBL_TIKZ_REG, POS_REG), caption = vc$caption)))
 }
+
+if (.should_run("fig_B6"))
+  write_tikz_figure(b6_panels,
+    tikz_path("dynamics", "figure_B6_regular_bias_by_profile"), ncol = 2)
+if (.should_run("fig_B7"))
+  write_tikz_figure(b7_panels,
+    tikz_path("dynamics", "figure_B7_retraction_bias_by_profile"), ncol = 2)
+if (.should_run("fig_B8"))
+  write_tikz_figure(b8_panels,
+    tikz_path("dynamics", "figure_B8_confirmation_bias_by_profile"), ncol = 2)
 
 }, error = .fail)
 }

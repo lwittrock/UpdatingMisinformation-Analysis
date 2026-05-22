@@ -23,34 +23,12 @@
 #                fig_B4, fig_B6, fig_B7, fig_B8, fig_B9, fig_B10, fig_B11
 run_sections <- "all"  # Reset to "all" before committing.
 
-# File locations relative to project root
-inpath <- "data/processed"
-
-# Table output format
-output_type <- "latex"  # can be set to 'html' or 'latex'
-
-# Figure quality
-set_dpi <- 400
-
 
 ######################################################
-# LOAD UTILITIES
+# SETUP — packages, utilities, data (see utils/bootstrap.R)
 ######################################################
-source("code/utils/packages.R")
-source("code/utils/constants.R")
-source("code/utils/helpers.R")
-source("code/utils/plot_theme.R")
-source("code/utils/figure_helpers.R")
-source("code/utils/run_control.R")
-.utils_loaded <- TRUE
-
+source("code/utils/bootstrap.R")
 cat(">> Pipeline started\n")
-
-
-######################################################
-# LOAD DATA & DERIVED VARIABLES
-######################################################
-source("code/utils/derived_variables.R")
 
 
 ######################################################

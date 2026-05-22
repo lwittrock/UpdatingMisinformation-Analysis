@@ -18,19 +18,7 @@
 ######################################################
 # SETUP (auto-loads utilities if run standalone)
 ######################################################
-if (!exists(".utils_loaded")) {
-  inpath      <- "data/processed"
-  output_type <- "latex"
-  set_dpi     <- 400
-  source("code/utils/packages.R")
-  source("code/utils/constants.R")
-  source("code/utils/helpers.R")
-  source("code/utils/plot_theme.R")
-  source("code/utils/figure_helpers.R")
-  source("code/utils/run_control.R")
-  .utils_loaded <- TRUE
-  source("code/utils/derived_variables.R")
-}
+if (!exists(".utils_loaded")) source("code/utils/bootstrap.R")
 
 .tick("Section 1: Main Results")
 
@@ -131,8 +119,6 @@ tryCatch({
 
 write_tikz_bias(ret_bias, tikz_path("main", "figure_5_retraction_bias"),
   ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-write_jpg_bias(ret_bias, fig_path("main", "figure_5_retraction_bias"),
-  ylabel_text = LBL_JPG_RET, positive_label = POS_RET)
 
 }, error = .fail)
 }
@@ -147,8 +133,6 @@ tryCatch({
 
 write_tikz_bias(conf_bias, tikz_path("main", "figure_6_confirmation_bias"),
   ylabel = LBL_TIKZ_REG, positive_label = POS_REG)
-write_jpg_bias(conf_bias, fig_path("main", "figure_6_confirmation_bias"),
-  ylabel_text = LBL_JPG_REG, positive_label = POS_REG)
 
 }, error = .fail)
 }
@@ -166,10 +150,6 @@ fig7_groups <- list(Retraction = ret_bias, `Opposite signal` = opp_bias)
 write_tikz_bias_grouped(fig7_groups, c("red", "blue"),
   tikz_path("main", "figure_7_opposite_signal"),
   ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-write_jpg_bias_grouped(fig7_groups, c("red", "blue"),
-  fig_path("main", "figure_7_opposite_signal"),
-  ylabel_text = LBL_JPG_RET, positive_label = POS_RET,
-  title = "Retraction vs opposite-colour signal")
 
 }, error = .fail)
 }
@@ -220,10 +200,6 @@ figB2_groups <- list(`Initial signal` = init_bias, Retraction = ret_bias)
 write_tikz_bias_grouped(figB2_groups, c("blue", "red"),
   tikz_path("main", "figure_B2_initial_signal_bias"),
   ylabel = LBL_TIKZ_RET, positive_label = POS_RET)
-write_jpg_bias_grouped(figB2_groups, c("blue", "red"),
-  fig_path("main", "figure_B2_initial_signal_bias"),
-  ylabel_text = LBL_JPG_RET, positive_label = POS_RET,
-  title = "Initial-signal bias vs retraction bias")
 
 }, error = .fail)
 }

@@ -1,12 +1,22 @@
 # ──────────────────────────────────────────────────
-# Package Loading
+# Bootstrap — one-stop setup for the analysis pipeline
 # Part of: Belief Updating with Misinformation analysis pipeline
 #
-# Purpose: Check and load the packages used by the analysis pipeline
-#          (01-03), and apply the stargazer 5.2.3 compatibility patch.
-#          Note: 00_prepare_data.R loads its own packages separately.
+# Loads packages, applies the stargazer patch, sources the utilities and the
+# data, and sets .utils_loaded. Sourced once by run_all.R, and by each
+# analysis file (01-03) when it is run on its own.
 # ──────────────────────────────────────────────────
 
+# Configuration defaults (set these before sourcing to override)
+if (!exists("inpath"))       inpath       <- "data/processed"
+if (!exists("output_type"))  output_type  <- "latex"   # "latex" or "html"
+if (!exists("set_dpi"))      set_dpi      <- 400
+if (!exists("run_sections")) run_sections <- "all"
+
+
+######################################################
+# PACKAGES
+######################################################
 required_packages <- c("ggplot2", "dplyr", "stargazer", "estimatr")
 missing <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
 if (length(missing) > 0) {
@@ -20,15 +30,12 @@ library(estimatr)
 
 library(stargazer)
 # Required for stargazer 5.2.3 with R >= 4.2. Can be removed when stargazer is updated.
-# Patch stargazer 5.2.3 is.na() bug for R >= 4.2
-# Bug: if(is.na(s)) called on a vector at line ~2104 of .stargazer.wrap
-# Fix: replace is.na(s) with anyNA(s) in the closure
+# Bug: if(is.na(s)) is called on a vector at line ~2104 of .stargazer.wrap.
+# Fix: add a length check before the scalar ops.
 local({
   sg_env <- environment(stargazer::stargazer)
   sw <- get(".stargazer.wrap", envir = sg_env)
   sw_body <- deparse(body(sw))
-  # The .inside.bracket function checks is.na(s) and s=="" before length(s)>1,
-  # which crashes when s is a vector. Fix: add length check before scalar ops.
   sw_body <- gsub(
     "if (is.na(s)) {",
     "if (length(s) > 1) { return(\"\") }\n        if (is.na(s)) {",
@@ -38,3 +45,13 @@ local({
   assign(".stargazer.wrap", sw, envir = sg_env)
   lockBinding(".stargazer.wrap", sg_env)
 })
+
+
+######################################################
+# UTILITIES & DATA
+######################################################
+source("code/utils/helpers.R")
+source("code/utils/figure_helpers.R")
+.utils_loaded <- TRUE
+
+source("code/utils/derived_variables.R")
