@@ -924,7 +924,7 @@ write.csv(df_informative, file = paste0(processed_path, "/data_informative.csv")
 save(df_uninformative, file = paste0(processed_path, "/data_uninformative.rda"))
 write.csv(df_uninformative, file = paste0(processed_path, "/data_uninformative.csv"), row.names = FALSE)
 
-cat(">> Preparing Data.R complete.\n")
+cat(">> 00_prepare_data.R complete.\n")
 
 
 

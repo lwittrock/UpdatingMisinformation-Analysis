@@ -29,7 +29,7 @@ load(file = paste0(inpath, "/data_informative.rda"))
 ######################################################
 # DERIVED VARIABLES
 # Signal-aligned prior and prior bins. Computed here so the bin definition
-# lives in one place (see prior_bin_breaks / prior_bin_labels in constants.R).
+# lives in one place (see prior_bin_breaks / prior_bin_labels in helpers.R).
 ######################################################
 
 # Prior aligned with signal direction on df_retract

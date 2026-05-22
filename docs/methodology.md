@@ -1,36 +1,83 @@
-# Bayesian Updating Logic — Reference Document
+# Methodology — experimental design and belief updating
 
-This document derives step by step the Bayesian framework underlying the analysis in Wittrock, Strobel & Tsakas, "Belief Updating with Misinformation." It covers the experimental setup, Bayes' rule applied to each signal type, the log-odds regression framework, and the two approaches to measuring signal strength (person-specific vs objective).
+Reference document for the experimental design and the Bayesian framework
+behind Wittrock, Strobel & Tsakas, "Belief updating with misinformation."
+Section 1 describes the design and the processed datasets; Sections 2 onward
+derive Bayes' rule for each signal type, the log-odds regression framework,
+and the two ways of measuring signal strength (person-specific vs objective).
+For the mapping from paper tables/figures to output files, see `README.md`.
 
 ---
 
-## 1. Experimental Setup
+## 1. Experimental Design
 
-### 1.1 The Urn
+### 1.1 Two experiments
 
-There are two equally likely urns (prior = 0.5):
+**Experiment 1** (`raw_data.csv`, `treat_aggregate_signal == 0`) — January 2022.
+Subjects see 9 uncertain ball draws + 3 ex-post verification rounds = 12 rounds.
+In a verification round subjects learn whether a previous ball was informative
+(confirmation) or uninformative (retraction). The 3 verification rounds are 3
+consecutive draws; the starting position varies across subjects.
+
+**Experiment 2** (`raw_data_extra.csv`, `treat_aggregate_signal == 1`) — January
+2023. Same design but with ex-ante verification: 6 uncertain signals + 3 signals
+whose informativeness is revealed immediately = 9 rounds. This lets us compare
+ex-post checks with ex-ante labelling.
+
+### 1.2 Information-display treatments (Experiment 1)
+
+Three sub-treatments vary what is shown on screen (`treat` variable):
+
+| `treat` | Description |
+|---|---|
+| 1 | Baseline: history of signals AND previously reported belief |
+| 2 | No anchor: history shown, previously reported belief hidden |
+| 3 | No history: only the most recent signal + previous belief |
+
+### 1.3 The urn and the signals
+
+Two equally likely urns (prior = 0.5):
 
 - **Red urn**: 3 red balls + 1 blue ball (gamma = 0.75 red)
 - **Blue urn**: 1 red ball + 3 blue balls (gamma = 0.75 blue)
 
-The participant's task is to estimate the probability that the urn is Red after observing a sequence of ball draws.
+The participant estimates the probability the urn is Red after a sequence of
+ball draws. Each draw is **uncertain**: with probability `prob_fake = 0.6` the
+ball comes from a 50/50 urn (uninformative); with probability `1 - prob_fake =
+0.4` it comes from the actual urn (informative). The participant sees the
+colour but not the informativeness.
 
-### 1.2 Uncertain Signals
+| Signal type | Source | Description |
+|---|---|---|
+| Regular signal | Both experiments | Colour shown, informativeness unknown |
+| Retraction (`ver_retract = 1`) | Experiment 1 | Ex-post: a previous ball is revealed uninformative — the update should be undone |
+| Confirmation (`ver_retract = 0`) | Experiment 1 | Ex-post: a previous ball is revealed informative — it came from the real urn |
+| Uninformative | Experiment 2 | Ex-ante: colour + "uninformative" shown together |
+| Informative | Experiment 2 | Ex-ante: colour + "informative" shown together |
 
-Each ball draw is **uncertain**: with probability `prob_fake = 0.6`, the ball is drawn from a 50/50 urn (uninformative). With probability `1 - prob_fake = 0.4`, the ball is drawn from the actual urn (informative).
+Section 16 lists every numeric parameter.
 
-The participant sees the ball color but does NOT know whether it was informative or not.
+### 1.4 Sample
 
-### 1.3 Verification Rounds (Experiment 1)
+849 subjects completed; 96 were removed as outliers (pre-registered criteria),
+leaving **753 subjects and 8,397 observations**. By experiment: Exp 1 — 606
+completed, 66 removed; Exp 2 — 243 completed, 30 removed.
 
-After some regular rounds, the participant learns whether a **previous** ball draw was informative or not:
+### 1.5 Processed datasets
 
-- **Retraction** (`ver_retract = 1`): "That signal was uninformative" — the participant should undo the previous update.
-- **Confirmation** (`ver_retract = 0`): "That signal was informative" — the participant now knows the signal came from the real urn.
+`00_prepare_data.R` builds these into `data/processed/`:
 
-### 1.4 Aggregate Rounds (Experiment 2)
+| Dataset | N | Content |
+|---|---|---|
+| `data_main`          | 8,397 | All observations (outliers removed) |
+| `data_regular`       | 6,777 | Regular signal rounds |
+| `data_retract`       |   985 | Retraction rounds |
+| `data_confirm`       |   635 | Confirmation rounds |
+| `data_informative`   |   269 | Ex-ante informative signals (Exp 2) |
+| `data_uninformative` |   370 | Ex-ante uninformative signals (Exp 2) |
 
-The participant is told **before** seeing the ball whether it is informative or uninformative.
+`00_prepare_data.R` also writes `data_subject` and `data_time`, which the
+analysis pipeline does not use.
 
 ---
 
@@ -183,7 +230,7 @@ In other words: **a retraction of a red signal is equivalent to receiving a blue
 posterior = belief_lag2
 ```
 
-(Return to the belief before the retracted signal. In `Preparing Data.R`: `posterior_subj = belief_lag2` for retractions.)
+(Return to the belief before the retracted signal. In `00_prepare_data.R`: `posterior_subj = belief_lag2` for retractions.)
 
 **But why is the objective signal "opposite ball" and not "return to belief_lag2"?**
 
@@ -279,7 +326,7 @@ Key observations:
 
 ## 6. The `signal_memory` Variable
 
-The variable `signal_memory` in `Preparing Data.R` stores these objective signal values. It is defined as the probability P(signal indicates Red urn) — i.e., the signal expressed as a probability rather than a likelihood ratio.
+The variable `signal_memory` in `00_prepare_data.R` stores these objective signal values. It is defined as the probability P(signal indicates Red urn) — i.e., the signal expressed as a probability rather than a likelihood ratio.
 
 Conversion to log-likelihood-ratio:
 ```
@@ -328,7 +375,7 @@ For real participants, signal_subj ≠ signal_memory because their beliefs devia
 
 ## 8. The `post()` Function
 
-The function in `Preparing Data.R` computes the Bayesian posterior in two stages:
+The function in `00_prepare_data.R` computes the Bayesian posterior in two stages:
 
 ```r
 post(prior, num_red, num_blue, num_red_ret, num_blue_ret, num_red_conf, num_blue_conf)
@@ -397,12 +444,12 @@ These are the estimated coefficients from `obslnpost = c * signal_ratio_obj + d 
 ### Retractions (objective signal)
 - c ≈ 0.82, d ≈ 0.71
 - c < 1 suggests the retraction signal receives less weight than Bayes prescribes, while d is similar to regular signals
-- **Caveat:** The belief change analysis (Table 10, retractions vs opposite ball) does not find a significant difference in raw belief change between retractions and opposite-colored balls once signal history is controlled for. So the c < 1 finding here may reflect properties of the log-odds decomposition rather than a clear-cut "retractions are less effective" story. The relationship between the log-odds c/d decomposition and the probability-space belief change results needs further investigation.
+- **Caveat:** the c < 1 finding may partly reflect properties of the log-odds decomposition rather than a clear-cut "retractions are less effective" story. The relationship between the log-odds c/d decomposition and probability-space belief change deserves care when interpreting (see the retraction-vs-opposite-signal comparison, paper Section 6 / Figure 7).
 
 ### Confirmations (objective signal)
 - c ≈ 1.45, d ≈ 0.58
 - c > 1 and d < 1 follow a qualitatively similar pattern to regular signals (over-weigh signal, under-weigh prior), but d is notably lower (0.58 vs 0.70)
-- **Caveat:** Other results show that over-reporting persists through confirmations (`over_report ~ over_report_lag1` has a strong positive coefficient). How this persistence relates to c > 1 and d < 1 in the log-odds decomposition is not immediately obvious and requires careful interpretation. The low d could partially explain persistence (prior biases carry through at reduced but nonzero weight), but the interplay between signal over-weighting and prior under-weighting in producing the net effect needs further analysis.
+- **Caveat:** over-reporting tends to persist through confirmations. How this persistence relates to c > 1 and d < 1 in the log-odds decomposition is not immediately obvious. The low d could partly explain persistence (prior biases carry through at reduced but nonzero weight), but the interplay between signal over-weighting and prior under-weighting in producing the net effect needs care.
 - **Open question:** Why is d lower for confirmations (0.58) than for regular signals (0.70) and retractions (0.71)? Possible explanations include: the verification event disrupting confidence in the current belief, collinearity between signal and prior (both push in the same direction for confirmations), or a genuine behavioral difference. Disentangling these requires further work.
 
 ---
