@@ -18,8 +18,9 @@
 #   "all"      -- run everything (default)
 #   "figures"  -- only figures
 #   "tables"   -- only tables
-#   c("fig5", "fig6", "tab1", ...) -- specific items
-# Dependencies are handled automatically (e.g. fig16 needs fig8 needs fig7).
+#   c("fig_5", "tab_1", ...) -- specific items
+# Section names: tab_1, tab_B1, tab_B2, fig_5, fig_6, fig_7, fig_B1, fig_B2,
+#                fig_B4, fig_B6, fig_B7, fig_B8, fig_B9, fig_B10, fig_B11
 run_sections <- "all"  # Reset to "all" before committing.
 
 # File locations relative to project root
@@ -39,6 +40,7 @@ source("code/utils/packages.R")
 source("code/utils/constants.R")
 source("code/utils/helpers.R")
 source("code/utils/plot_theme.R")
+source("code/utils/figure_helpers.R")
 source("code/utils/run_control.R")
 .utils_loaded <- TRUE
 
@@ -54,9 +56,9 @@ source("code/utils/derived_variables.R")
 ######################################################
 # ANALYSIS
 ######################################################
-source("code/01_analysis_regular.R")
-source("code/02_analysis_retract.R")
-source("code/03_analysis_confirm.R")
+source("code/01_main_results.R")
+source("code/02_dynamics.R")
+source("code/03_treatments.R")
 
 
 ######################################################

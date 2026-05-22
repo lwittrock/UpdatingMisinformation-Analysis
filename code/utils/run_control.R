@@ -5,19 +5,10 @@
 # Purpose: Section selector, dependency resolution, and timing
 # ──────────────────────────────────────────────────
 
-# Dependencies between sections (section -> prerequisite)
-# These handle within-file ordering; cross-file dependencies are resolved
-# by derived_variables.R (run before any analysis file).
-.deps <- list(
-  # Retractions: fig_ret_response_by_initial creates df_ret_response_summary
-  fig_ret_vs_opposite_ball = "fig_ret_response_by_initial",
-  fig_ret_vs_uninformative = "fig_ret_response_by_initial",
-  # Confirmations: fig_conf_all_reactions creates df_conf_nonceiling and df_confirm_change_sum
-  fig_conf_belief_change = "fig_conf_all_reactions",
-  fig_conf_by_initial = "fig_conf_all_reactions",
-  # Confirmations: fig_conf_belief_change creates df_conf_by_reaction
-  fig_conf_vs_informative = "fig_conf_belief_change"
-)
+# Dependencies between sections (section -> prerequisite).
+# Each analysis file computes its shared summaries up-front, outside the
+# section guards, so there are no within-file section dependencies.
+.deps <- list()
 
 .should_run <- function(section) {
   if (identical(run_sections, "all")) return(TRUE)

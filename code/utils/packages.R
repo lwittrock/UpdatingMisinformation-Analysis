@@ -2,12 +2,12 @@
 # Package Loading
 # Part of: Belief Updating with Misinformation analysis pipeline
 #
-# Purpose: Check and load all required packages, apply stargazer patch
+# Purpose: Check and load the packages used by the analysis pipeline
+#          (01-03), and apply the stargazer 5.2.3 compatibility patch.
+#          Note: 00_prepare_data.R loads its own packages separately.
 # ──────────────────────────────────────────────────
 
-required_packages <- c("ggplot2", "ggsci", "gridExtra", "tidyr", "dplyr",
-                        "plotrix", "ggpubr", "ggforce", "stargazer", "lme4",
-                        "stringr", "estimatr")
+required_packages <- c("ggplot2", "dplyr", "stargazer", "estimatr")
 missing <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
 if (length(missing) > 0) {
   stop("Missing packages: ", paste(missing, collapse = ", "),
@@ -15,13 +15,8 @@ if (length(missing) > 0) {
 }
 
 library(ggplot2)
-library(ggsci)
-library(gridExtra)
-library(tidyr)
 library(dplyr)
-library(plotrix)
-library(ggpubr)
-library(ggforce)
+library(estimatr)
 
 library(stargazer)
 # Required for stargazer 5.2.3 with R >= 4.2. Can be removed when stargazer is updated.
@@ -43,6 +38,3 @@ local({
   assign(".stargazer.wrap", sw, envir = sg_env)
   lockBinding(".stargazer.wrap", sg_env)
 })
-library(lme4)
-library(stringr)
-library(estimatr)

@@ -5,23 +5,21 @@
 # Purpose: Shared helper functions for output, clustering, and stargazer
 # ──────────────────────────────────────────────────
 
-# Output path helpers
+# Output path helpers.
+# Topics map to paper sections: "main" (Table 1, Figs 5-7, B1-B2),
+# "dynamics" (Tables B1-B2, Figs B4, B6-B8), "treatments" (Figs B9-B11).
 outpath <- "output"
-fig_path <- function(topic, name) paste0(outpath, "/", topic, "/figures/", name, ".jpg")
-tab_path <- function(topic, name) {
+fig_path  <- function(topic, name) paste0(outpath, "/", topic, "/figures/", name, ".jpg")
+tikz_path <- function(topic, name) paste0(outpath, "/", topic, "/figures/", name, ".tex")
+tab_path  <- function(topic, name) {
   ext <- ifelse(output_type == "html", "html", "tex")
   paste0(outpath, "/", topic, "/tables/", name, ".", ext)
 }
 
 # Create output directories
-for (topic in c("regular", "retract", "confirm")) {
+for (topic in c("main", "dynamics", "treatments")) {
   dir.create(paste0(outpath, "/", topic, "/figures"), recursive = TRUE, showWarnings = FALSE)
   dir.create(paste0(outpath, "/", topic, "/tables"), recursive = TRUE, showWarnings = FALSE)
-}
-
-# Helper: get cluster vector matching rows actually used by lm (after NA removal)
-model_clusters <- function(model, cluster_vec) {
-  cluster_vec[as.integer(names(model$residuals))]
 }
 
 # Helper: write stargazer output without the auto-generated timestamp comment
