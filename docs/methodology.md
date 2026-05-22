@@ -76,9 +76,6 @@ completed, 66 removed; Exp 2 — 243 completed, 30 removed.
 | `data_informative`   |   269 | Ex-ante informative signals (Exp 2) |
 | `data_uninformative` |   370 | Ex-ante uninformative signals (Exp 2) |
 
-`00_prepare_data.R` also writes `data_subject` and `data_time`, which the
-analysis pipeline does not use.
-
 ---
 
 ## 2. Signal Likelihoods

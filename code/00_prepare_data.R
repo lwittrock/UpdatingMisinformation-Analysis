@@ -1,6 +1,10 @@
-# Importing and Preparing Data for Figures and Tables in 'Belief Updating with Misinformation'
+# Import and prepare the raw experimental data for the analysis pipeline.
+# Part of: Belief Updating with Misinformation analysis pipeline
 # Code by Lars Wittrock
-# Date: 12/12/2023
+#
+# Reads the raw CSVs, cleans and reshapes them, derives the analysis
+# variables, removes outliers, and writes the six datasets the pipeline
+# uses to data/processed/. Run this once before code/run_all.R.
 
 ######################################################
 # TO ADJUST
@@ -798,14 +802,16 @@ cat(">> Creating subject-level datasets...\n")
 # Creating subject level data sets
 ######################################################
 
-# Creating subject data set - only completed observations
+# Subject-level table — only the fields needed to flag outliers
 df_subject <- df_long %>%
   group_by(id) %>%
-  dplyr::summarise(correct_num = sum(correct), belief50_num = sum(belief50), wrong_num = sum(wrong), no_change_num = sum(no_change),
-            treat = first(treat), treat_aggregate_signal = first(treat_aggregate_signal), test_correct = first(test_correct), crt1_correct = first(crt1_correct), crt2_correct = first(crt2_correct), crt3_correct = first(crt3_correct), crt4_correct = first(crt4_correct), crt_score = first(crt_score), age = first(age), occ = first(occ), edu = first(edu), prob_fam = first(prob_fam), gender = first(gender),
-            country = first(country), test1 = first(test1), test2 = first(test2), test3 = first(test3), test4 = first(test4), test5 = first(test5), test6 = first(test6), payoff = first(payoff), sr_button_clicks = first(sr_button_clicks),
-            belief_strategy = first(belief_strategy), belief_optimal = first(belief_optimal), belief_fake_blue = first(belief_fake_blue), belief_fake_red = first(belief_fake_red), text_choice = first(text_choice), duration = first(duration), duration_min = first(duration_min),
-            prolific_id = first(prolific_id))
+  dplyr::summarise(
+    belief50_num           = sum(belief50),
+    wrong_num              = sum(wrong),
+    no_change_num          = sum(no_change),
+    treat_aggregate_signal = first(treat_aggregate_signal),
+    duration               = first(duration)
+  )
 
 df_subject <- df_subject[!duplicated(df_subject$id), ]
 
@@ -895,14 +901,6 @@ cat(">> Saving datasets to disk...\n")
 # Saving main file
 save(df_main, file = paste0(processed_path, "/data_main.rda"))
 write.csv(df_main, file = paste0(processed_path, "/data_main.csv"), row.names = FALSE)
-
-# Saving subject data file
-save(df_subject, file = paste0(processed_path, "/data_subject.rda"))
-write.csv(df_subject, file = paste0(processed_path, "/data_subject.csv"), row.names = FALSE)
-
-# Saving time data file
-save(df_time, file = paste0(processed_path, "/data_time.rda"))
-write.csv(df_time, file = paste0(processed_path, "/data_time.csv"), row.names = FALSE)
 
 # Saving data file for regular updating
 save(df_regular, file = paste0(processed_path, "/data_regular.rda"))
